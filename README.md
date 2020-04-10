@@ -4,10 +4,13 @@
 --> Les Pull-Request et Issues sont les bienvenues :)  
 
 
-Programme d'extraction et de formatage des données issues du format OpenAir ()  
+Programme d'extraction et de formatage des données issues du format OpenAir (Airspace and Terrain description language).
 Un unique fichier au format standard AIXM v4.5 (Aeronautical Information Exchange Modele) est générée en sortie de traitement.  
 
-(*) AIXM - Aeronautical Information Exchange Modele : Un standard internationanl d'échange de données aéronautiques. Basé sur la technologie XML, ce formay est décrit ici - http://www.aixm.aero/   
+
+(*) OpenAir - Airspace and Terrain description language : A open standard for displaying map information - http://www.winpilot.com/UsersGuide/UserAirspace.asp
+
+(*) AIXM - Aeronautical Information Exchange Modele : Un standard internationanl d'échange de données aéronautiques. Basé sur la technologie XML - http://www.aixm.aero/   
 Nota. Actuellement, seul l'ancien format AIXM 4.5 est pris en charge. Ultérieurement, ce programme évoluera probablement pour générer la version AIXM 5.1  
 
 
