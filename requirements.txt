@@ -1,0 +1,6 @@
+###
+### Librayries
+###    Syntaxe4load --> pip install -r openairParser/requirements.txt
+###
+beautifulsoup4
+lxml
