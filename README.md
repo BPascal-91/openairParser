@@ -22,7 +22,7 @@ pip install -r requirements.txt
 ## Utilisation
 Le programme produit un log et un fichier dans le dossier ./out/  
 ```
-openairParser v1.1.0  
+openairParser v1.0.0  
 -----------------  
 Aeronautical Information Exchange Model (AIXM) Converter  
 Call: openairParser <[drive:][path]filename>
