@@ -54,53 +54,11 @@
 AC A
 SP 0,2,255,0,0
 SB -1,-1,-1
-V X=51:30:00 N 3:00:00 E
 DC 0.05
 
 ** Clearance requested (Class C and D) **
 AC C
 SP 0,2,0,0,255
-SB -1,-1,-1
-DC 0.05
-
-AC D
-SP 0,2,0,0,255
-SB -1,-1,-1
-DC 0.05
-
-** No Clearance requested when VMC (Class E) **
-AC E
-SP 0,2,200,200,255
-SB -1,-1,-1
-DC 0.05
-
-** Comply with Restrictions (Restricted Areas)
-AC R
-SP 0,2,0,0,0
-SB -1,-1,-1
-DC 0.05
-
-** Danger Areas **
-AC Q
-SP 0,1,255,0,0
-SB -1,-1,-1
-DC 0.05
-
-** Permanent Avoidance (Prohibited or Restricted Areas) **
-AC P
-SP 0,1,255,0,0
-SB 255,0,0
-DC 0.05
-
-** Dispensatory Glider Activity **
-AC W
-SP 0,2,0,255,0
-SB -1,-1,-1
-DC 0.05
-
-** Natural Parcs and Reserves, Parachute Activity **
-AC GP
-SP 1,1,255,0,0
 SB -1,-1,-1
 DC 0.05
 
@@ -112,7 +70,7 @@ DC 0.05
 ** RMZ ANGERS (2019/04/18) **
 AC R
 AN RMZ Angers 124.7
-AH 2500FT AMSL
+AH 2500F AMSL
 AL SFC
 DP 47:36:04 N 000:25:56 W
 DP 47:29:55 N 000:24:45 W
@@ -121,7 +79,7 @@ DP 47:37:29 N 000:09:09 W
 DP 47:36:04 N 000:25:56 W
 
 ** RMZ MORLAIX (2019/01/03) **
-AC R
+AC D
 AN RMZ Morlaix 118.5
 AH 1500FT AMSL
 AL SFC
@@ -129,7 +87,7 @@ V X=48:36:03 N 003:49:00 W
 DC 3
 
 ** RMZ VALENCE (01/01/2017) **
-AC R
+AC E
 AN RMZ Valence 120.1  
 AH 2500FT AMSL
 AL SFC
@@ -154,6 +112,7 @@ V D=+
 V X=49:58:19 N 002:43:47 E
 DB 50:03:18 N 002:43:09 E,49:53:20 N 002:44:23 E
 DP 49:53:20 N 002:44:23 E
+DP
 DP 49:53:03 N 002:38:52 E
 V D=+
 V X=49:58:02 N 002:38:15 E
@@ -184,7 +143,7 @@ DP 44:50:51 N 002:34:19 E
 ** VFR code 7000 **
 AC E
 AN TMZ MONTELIMAR
-AH FL115
+AH FL 115
 AL FL55
 DP 44:34:07 N 004:43:10 E
 DP 44:20:05 N 004:45:49 E
@@ -593,7 +552,7 @@ DP 45:18:50 N 006:52:01 E
 AC W
 AN Vanoise P2 Aussois du 15/05 au 30/10
 AL GND
-AH 1000M AGL
+AH 1000 M AGL
 DP 45:18:36 N 006:40:26 E
 DP 45:18:52 N 006:41:01 E
 DP 45:18:25 N 006:41:29 E
