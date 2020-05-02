@@ -16,7 +16,7 @@ oLog = bpaTools.Logger(___AppId___,__LogFile__)
 
 ### Context d'excecution
 if len(sys.argv)<2:
-    oLog.isDebug = True     # Write the debug-messages in the log filezzz
+    ##oLog.isDebug = True     # Write the debug-messages in the log filezzz
     sSrcPath = "../tst/"
   #  sSrcFile = sSrcPath + "20191213_FFVP_sample_AIRSPACE_FRANCE_TXT_1911.txt"
     sSrcFile = sSrcPath + "20191213_FFVP_AIRSPACE_FRANCE_TXT_1911.txt"
