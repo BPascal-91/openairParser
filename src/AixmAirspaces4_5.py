@@ -223,6 +223,7 @@ class AixmAirspaces:
         oXML.set("version", "4.5")
         oXML.set("created", bpaTools.getNowISO())
         oXML.set("effective", bpaTools.getNowISO())
+        #print(etree.tostring(oXML, pretty_print=True))
         
         #Ajout des zones aériennes
         for oAS in self.oAirspaces:
@@ -241,9 +242,6 @@ class AixmAirspaces:
             if not oAS.sClass in [None, ""]:
                 oItem = etree.SubElement(oAse, "codeClass")
                 oItem.text = oAS.sClass
-            
-            
-            
             oItem = etree.SubElement(oAse, "codeDistVerUpper")
             oItem.text = oAS.codeDistVerUpper
             oItem = etree.SubElement(oAse, "valDistVerUpper")
@@ -256,9 +254,61 @@ class AixmAirspaces:
             oItem.text = str(oAS.valDistVerLower)
             oItem = etree.SubElement(oAse, "uomDistVerLower")
             oItem.text = oAS.uomDistVerLower
-
-        
+            
         #print(etree.tostring(oXML, pretty_print=True))
+        #Ajout des bordures de zones aériennes
+        for oAS in self.oAirspaces:
+            oAbd = etree.SubElement(oXML, "Abd")
+            oAbdUid = etree.SubElement(oAbd, "AbdUid")
+            oAbdUid.set("mid", str(oAS.getID()))
+            oAseUid = etree.SubElement(oAbdUid, "AseUid")
+            oAseUid.set("mid", str(oAS.getID()))
+            oCodeType = etree.SubElement(oAseUid, "codeType")
+            if oAS.sType in [None, ""]:
+                oCodeType.text = " "
+            else:
+                oCodeType.text = oAS.sType
+            oCodeId = etree.SubElement(oAseUid, "codeId")
+            oCodeId.text = oAS.codeId
+            
+            for oBD in oAS.oBorder:
+                if isinstance(oBD, AixmAvx4_5):
+                    oAvx = etree.SubElement(oAbd, "Avx")
+                    oCodeType = etree.SubElement(oAvx, "codeType")
+                    if oAS.sType in [None, ""]:
+                        oCodeType.text = " "
+                    else:
+                        oCodeType.text = oBD.codeType
+                    oGeoLat = etree.SubElement(oAvx, "geoLat")
+                    oGeoLat.text = oBD.geoLat
+                    oGeoLong = etree.SubElement(oAvx, "geoLong")
+                    oGeoLong.text = oBD.geoLong
+                    oCodeDatum = etree.SubElement(oAvx, "codeDatum")
+                    oCodeDatum.text = oBD.codeDatum
+                    if not oBD.geoLatArc is None:
+                        oGeoLatArc = etree.SubElement(oAvx, "geoLatArc")
+                        oGeoLatArc.text = oBD.geoLatArc                    
+                        oGeoLongArc = etree.SubElement(oAvx, "geoLongArc")
+                        oGeoLongArc.text = oBD.geoLongArc
+                        oValRadiusArc = etree.SubElement(oAvx, "valRadiusArc")
+                        oValRadiusArc.text = oBD.valRadiusArc
+                        oUomRadiusArc = etree.SubElement(oAvx, "uomRadiusArc")
+                        oUomRadiusArc.text = oBD.uomRadiusArc
+                elif isinstance(oBD, AixmCircle4_5):
+                    oCircle = etree.SubElement(oAbd, "Circle")
+                    oGeoLatCen = etree.SubElement(oCircle, "geoLatCen")
+                    oGeoLatCen.text = oBD.geoLatCen
+                    oGeoLongCen = etree.SubElement(oCircle, "geoLongCen")
+                    oGeoLongCen.text = oBD.geoLongCen
+                    oCodeDatum = etree.SubElement(oCircle, "codeDatum")
+                    oCodeDatum.text = oBD.codeDatum
+                    oValRadius = etree.SubElement(oCircle, "valRadius")
+                    oValRadius.text = oBD.valRadius
+                    oUomRadius = etree.SubElement(oCircle, "uomRadius")
+                    oUomRadius.text = oBD.uomRadius
+
+        #print(etree.tostring(oXML, pretty_print=True))
+        #Creation du fichier xml
         oTree = etree.ElementTree(oXML)
         oTree.write(sDstFile, pretty_print=True, xml_declaration=True, encoding="utf-8")
         
