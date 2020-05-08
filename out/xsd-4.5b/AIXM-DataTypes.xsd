@@ -3134,6 +3134,7 @@
 		<xsd:restriction base="xsd:string">
 			<xsd:enumeration value="RMZ"/>
 			<xsd:enumeration value="TMZ"/>
+			<xsd:enumeration value="TMZ/RMZ"/>
 			<xsd:enumeration value="ZIT"/>
 			<xsd:enumeration value="ZSM"/>
 			<xsd:enumeration value="LTA"/>

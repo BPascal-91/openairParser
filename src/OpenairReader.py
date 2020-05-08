@@ -37,8 +37,10 @@ class OpenairReader:
 
 
     def parseClass(self, aLine:list) -> None:
+        self.oZone.sType = ""
         if aLine[1] in ["A", "B", "C", "D", "E", "F", "G", "OTHER"]:
             self.oZone.sClass = aLine[1]
+            self.oZone.sType = "CLASS"
         elif aLine[1] in ["CTR", "TMA", "ZIT"]:
             self.oZone.sClass = "D"
             self.oZone.sType = aLine[1]
@@ -49,16 +51,16 @@ class OpenairReader:
             self.oZone.sClass = "A"
             self.oZone.sType = aLine[1]
         elif aLine[1] in ["R", "P", "TMZ", "RMZ"]:
-            self.oZone.sClass = None
+            self.oZone.sClass = ""
             self.oZone.sType = aLine[1]
         elif aLine[1] in ["Q"]:
-            self.oZone.sClass = None
+            self.oZone.sClass = ""
             self.oZone.sType = "R"           
         elif aLine[1] in ["W", "VV"]:
-            self.oZone.sClass = None
+            self.oZone.sClass = ""
             self.oZone.sType = "W"            
         elif aLine[1] in ["ZSM", "GP", "Bird", "Rapace"]:
-            self.oZone.sClass = None
+            self.oZone.sClass = ""
             self.oZone.sType = "ZSM"
             self.oZone.codeId = aLine[1].upper()
         else:
@@ -69,7 +71,7 @@ class OpenairReader:
     def parseName(self, aLine:list) -> None:
         self.oZone.sName = " ".join(aLine[1:])
         
-        if aLine[1] in ["CTR", "CTR1", "CTR2", "TMA", "CTA", "R", "P", "LTA", "W", "VV", "ZSM", "GP", "Bird", "Rapace", "ZIT", "RMZ", "TMZ", "AWY"]:
+        if aLine[1] in ["CTR", "CTR1", "CTR2", "TMA", "CTA", "R", "P", "LTA", "W", "VV", "ZSM", "GP", "Bird", "Rapace", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "AWY"]:
             self.oZone.sName = " ".join(aLine[2:])
             
             if aLine[1]==self.oZone.sType:
@@ -83,21 +85,18 @@ class OpenairReader:
             elif aLine[1] in ["CTA", "LTA", "AWY"]:
                 self.oZone.sClass = "A"
                 self.oZone.sType = aLine[1]
-            elif aLine[1] in ["R", "P", "TMZ", "RMZ"]:
-                self.oZone.sClass = None
+            elif aLine[1] in ["R", "P", "RMZ", "TMZ", "TMZ/RMZ"]:
+                self.oZone.sClass = ""
                 self.oZone.sType = aLine[1]
             elif aLine[1] in ["W", "VV"]:
-                self.oZone.sClass = None
+                self.oZone.sClass = ""
                 self.oZone.sType = "W"            
             elif aLine[1] in ["ZSM", "GP", "Bird", "Rapace"]:
-                self.oZone.sClass = None
+                self.oZone.sClass = ""
                 self.oZone.sType = "ZSM"
                 self.oZone.codeId = aLine[1].upper()
             else:
                 self.oLog.warning("parseName warning {}".format(aLine), outConsole=False)
-            
-            if self.oZone.codeId==None:
-                self.oZone.codeId = aLine[1]
         return
 
 
@@ -170,7 +169,7 @@ class OpenairReader:
     def parseLine(self, line:str) -> None:
         if line == "":
             return
-        
+            
         aLine = line.split(" ")
         if "" in aLine:
             aLine = list(filter(None, aLine))

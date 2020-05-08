@@ -129,8 +129,8 @@ class AixmAse4_5:
         return
 
     def isCorrectHeader(self) -> bool:
-        ret = self.sClass!=None or (self.sClass==None and self.sType in ["R","P","W","TMZ","RMZ","ZSM"])
-        ret = ret and \
+        #ret = self.sClass!=None or (self.sClass==None and self.sType in ["R","P","W","TMZ","RMZ","TMZ/RMZ","ZSM"])
+        ret = self.sClass  != None and \
               self.sType   != None and \
               self.sName   != None and \
               self.sUpper  != None and \
@@ -230,12 +230,15 @@ class AixmAirspaces:
             oAseUid = etree.SubElement(oAse, "AseUid")
             oAseUid.set("mid", str(oAS.getID()))
             oCodeType = etree.SubElement(oAseUid, "codeType")
-            oCodeType.text = oAS.sType
+            if oAS.sType in [None, ""]:
+                oCodeType.text = " "
+            else:
+                oCodeType.text = oAS.sType
             oCodeId = etree.SubElement(oAseUid, "codeId")
             oCodeId.text = oAS.codeId
             oItem = etree.SubElement(oAse, "txtName")
             oItem.text = str(oAS.sName).upper()
-            if oAS.sClass != None:
+            if not oAS.sClass in [None, ""]:
                 oItem = etree.SubElement(oAse, "codeClass")
                 oItem.text = oAS.sClass
             
