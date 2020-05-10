@@ -1,28 +1,71 @@
 #!/usr/bin/env python3
 
 import bpaTools
+import math
+from pyproj import Proj, transform
+
+
+pWGS = Proj("epsg:4326")            # EPSG:4326 = WGS84 / Geodetic coordinate system for World  :: Deprecated format --> Proj(init="epsg:4326")
+nm = 1852                           # Nautic Mile to meters
 
 
 def getCoordonnees(aLine:list) -> (str,str):
     sLat:str = None
     sLon:str = None
-    #Openair format - DP 47:36:04 N 000:25:56 W  
-    if aLine[0] == "DP" and len(aLine) == 5:
-        sLat = str(aLine[1]).replace(":","") + aLine[2]
-        sLon = str(aLine[3]).replace(":","") + aLine[4]
-    #Openair format - V X=48:36:03 N 003:49:00 W
-    elif aLine[0] == "V" and aLine[1][:2] == "X=" and len(aLine) == 5:
-        sLat = str(aLine[1][2:]).replace(":","") + aLine[2]
-        sLon = str(aLine[3]).replace(":","") + aLine[4]
-    #Openair format - DB 44:54:52 N 005:02:35 E,44:55:20 N 004:54:10 E // ['DB', '44:54:52', 'N', '005:02:35', 'E', '44:55:20', 'N', '004:54:10', 'E']
-    elif aLine[0] == "DB" and len(aLine) == 9:
-        sLat = str(aLine[1]).replace(":","") + aLine[2]
-        sLon = str(aLine[3]).replace(":","") + aLine[4]        
-    else:
+    aLat = ["N","S"]
+    aLon = ["E","W","O"]
+    try:
+        if aLine[0] == "V" and aLine[1][:2] == "X=":
+            #Openair format - V X=48:36:03 N 003:49:00 W
+            aLine[1] = aLine[1][2:]     #Cleaning start coords
+            
+        if aLine[0] in ["DP", "DB", "V"]:
+            #Openair format - DP 47:36:04 N 000:25:56 W
+            #Openair format - DP 47:36:04 N 000:25:56W
+            #Openair format - DP 47:36:04N 000:25:56 W
+            #Openair format - DP 47:36:04N 000:25:56W
+            #Openair format - DB 44:54:52N 005:02:35 E 44:55:20N 004:54:10 E
+            #Openair format - DB 44:54:52N 005:02:35 E 44:55:20N 004:54:10E
+            #Openair format - DB 44:54:52N 005:02:35E 44:55:20N 004:54:10 E
+            #Openair format - DB 44:54:52N 005:02:35E 44:55:20N 004:54:10E
+            #Openair format - V 48:36:03 N 003:49:00 W
+            #Openair format - V 48:36:03 N 003:49:00W
+            #Openair format - V 48:36:03N 003:49:00 W
+            #Openair format - V 48:36:03N 003:49:00W
+            
+            if len(aLine[1])>1 and aLine[1][-1].upper() in aLat:
+                sLat = aLine[1]
+            elif aLine[2].upper() in aLat:
+                sLat = aLine[1]+aLine[2]
+                
+            if len(aLine[2])>1 and aLine[2][-1].upper() in aLon:
+                sLon = aLine[2]
+            if sLon==None and len(aLine) > 2:
+                if aLine[3][-1].upper() in aLon:
+                    if len(aLine[3])==1: 
+                        sLon = aLine[2]+aLine[3]
+                    else:
+                        sLon = aLine[3]
+            if sLon==None and len(aLine) > 3:
+                if aLine[4].upper() in aLon:
+                    if len(aLine[4])==1: 
+                        sLon = aLine[3]+aLine[4]
+                    else:
+                        sLon = aLine[4]
+
+            if sLat==None or sLon==None:
+                raise Exception("?")
+                
+            #Calcul en D.d pour reformattage systématique en DMS.d
+            lat, lon = bpaTools.geoStr2dd(sLat, sLon)
+            sLat, sLon = bpaTools.geoDd2dms(lat,"lat" ,lon,"lon", digit=4)
+            
+        return sLat, sLon
+    
+    except Exception as e:
         sHeader = "[" + bpaTools.getFileName(__file__) + "." + getCoordonnees.__name__ + "()] "
         sMsg = "/!\ Parsing Line Error - {}".format(aLine)
-        raise Exception(sHeader + sMsg)
-    return sLat,sLon
+        raise Exception(sHeader + sMsg + " / " + str(e))
 
 
 #########   Cirlce of Airespace border  ########
@@ -45,10 +88,10 @@ class AixmCircle4_5:
             self.geoLatCen = lat
             self.geoLongCen = lon
             self.valRadius = fRadius
+            return True
         except:
             raise
-        return True
-
+        
 
 
 #########   Vector of Airespace border  ########
@@ -76,29 +119,40 @@ class AixmAvx4_5:
             lat, lon = getCoordonnees(aLine)
             self.geoLat = lat
             self.geoLong = lon
+            return True
         except:
             raise
-        return True
+
         
     def loadArc(self, aCenter:list, aPoint2Point:list, circleClockWise:str) -> bool:
         #aCenter = DP 47:36:04 N 000:25:56 W
-        #aPoint2Point = 'DB 44:54:52 N 005:02:35 E,44:55:20 N 004:54:10 E'
+        #aPoint2Point = 'DB 44:54:52 N 005:02:35 E 44:55:20 N 004:54:10 E'
         try:
             self.openairType = "Arc"
             if circleClockWise == "-":
                 self.codeType = "CCA"       #Clockwise Arc
             else:
                 self.codeType = "CWA"       #Counter Clockwise Arc
+            
+            #Point d'entrée de l'arc
+            lat, lon = getCoordonnees(aPoint2Point)
+            self.geoLat = lat
+            self.geoLong = lon
+            #Le centre de l'arc
             lat, lon = getCoordonnees(aCenter)
             self.geoLatArc = lat
             self.geoLongArc = lon
-            self.valRadiusArc = "#"         #Non connue en Openair !
-            lat, lon = getCoordonnees(aPoint2Point)
-            self.geoLat = lat
-            self.geoLong = lon  
+            
+            # Détermination du rayon de l'arc
+            latC, lonC = bpaTools.geoStr2dd(self.geoLatArc, self.geoLongArc)
+            latS, lonS = bpaTools.geoStr2dd(self.geoLat, self.geoLong)
+            srs = Proj(proj="ortho", lat_0=latC, lon_0=lonC)
+            start_x, start_y = transform(p1=pWGS, p2=srs, x=latS, y=lonS)
+            radius = math.sqrt(start_x**2+start_y**2)   # Meter
+            self.valRadiusArc = round(radius/nm,2)      # Nautic Mile
+            return True
         except:
             raise        
-        return True    
          
         
 ###############   Airespace area  ###########
@@ -170,9 +224,9 @@ class AixmAse4_5:
             oPoint = AixmAvx4_5()
             if oPoint.loadPoint(aLine):
                 self.oBorder.append(oPoint)
+            return oPoint
         except:
-            raise       
-        return oPoint
+            raise
 
     def makeArc(self, aCenter:list, aPoint2Point:list, circleClockWise:str) -> AixmAvx4_5:
         oArc = AixmAvx4_5()
@@ -238,7 +292,7 @@ class AixmAirspaces:
             oCodeId = etree.SubElement(oAseUid, "codeId")
             oCodeId.text = oAS.codeId
             oItem = etree.SubElement(oAse, "txtName")
-            oItem.text = str(oAS.sName).upper()
+            oItem.text = str(oAS.sName)
             if not oAS.sClass in [None, ""]:
                 oItem = etree.SubElement(oAse, "codeClass")
                 oItem.text = oAS.sClass
@@ -291,7 +345,7 @@ class AixmAirspaces:
                         oGeoLongArc = etree.SubElement(oAvx, "geoLongArc")
                         oGeoLongArc.text = oBD.geoLongArc
                         oValRadiusArc = etree.SubElement(oAvx, "valRadiusArc")
-                        oValRadiusArc.text = oBD.valRadiusArc
+                        oValRadiusArc.text = str(oBD.valRadiusArc)
                         oUomRadiusArc = etree.SubElement(oAvx, "uomRadiusArc")
                         oUomRadiusArc.text = oBD.uomRadiusArc
                 elif isinstance(oBD, AixmCircle4_5):
@@ -303,7 +357,7 @@ class AixmAirspaces:
                     oCodeDatum = etree.SubElement(oCircle, "codeDatum")
                     oCodeDatum.text = oBD.codeDatum
                     oValRadius = etree.SubElement(oCircle, "valRadius")
-                    oValRadius.text = oBD.valRadius
+                    oValRadius.text = str(oBD.valRadius)
                     oUomRadius = etree.SubElement(oCircle, "uomRadius")
                     oUomRadius.text = oBD.uomRadius
 

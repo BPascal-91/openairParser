@@ -169,8 +169,11 @@ class OpenairReader:
     def parseLine(self, line:str) -> None:
         if line == "":
             return
-            
-        aLine = line.split(" ")
+        
+        line = line.replace(","," ")     #Cleaning
+        line = line.replace("\t"," ")    #Cleaning
+        line = line.replace("  "," ")    #Cleaning
+        aLine = line.split(" ")          #Tokenize
         if "" in aLine:
             aLine = list(filter(None, aLine))
         
@@ -236,8 +239,6 @@ class OpenairReader:
                 self.circleClockWise = "+"      #Reset the default value
                 
             elif aLine[0] == "DB":              #Just an Arc; sample 'DB 44:54:52 N 005:02:35 E,44:55:20 N 004:54:10 E'
-                sTmp = str(" ".join(aLine)).replace(","," ")
-                aLine = sTmp.split(" ")
                 if "" in aLine:
                     aLine = list(filter(None, aLine))
                 self.oZone.makeArc(self.circleCenter, aLine, self.circleClockWise)
@@ -247,7 +248,7 @@ class OpenairReader:
                 self.oLog.critical("Type of line error: {0} - Airspace={1}".format(line, self.oZone.getDesc()), outConsole=False)
 
         except Exception as e:
-            self.oLog.critical("Error: {0} - Airspace={1}".format(e, self.oZone.getDesc()), outConsole=False)
+            self.oLog.critical("Error: {0} - {1} - Airspace={2}".format(str(e), line, self.oZone.getDesc()), outConsole=False)
             #pass
         
         return
