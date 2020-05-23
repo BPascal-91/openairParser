@@ -11,14 +11,16 @@ __AppPath__:str     = bpaTools.getFilePath(__file__)
 __AppVers__:str     = bpaTools.getVersionFile()
 ___AppId___:str     = __AppName__ + " v" + __AppVers__
 __OutPath__:str     = __AppPath__ + "../out/"
-__LogFile__:str     = __OutPath__ + __AppName__ + ".log"
+__LogFile__:str     = __OutPath__ + "_" + __AppName__ + ".log"
 oLog = bpaTools.Logger(___AppId___,__LogFile__)
 
 ### Context d'excecution
 if len(sys.argv)<2:
     ##oLog.isDebug = True     # Write the debug-messages in the log filezzz
     sSrcPath = "../tst/"
-    sSrcFile = sSrcPath + "20191213_FFVP_sample_AIRSPACE_FRANCE_TXT_1911.txt"
+    sSrcFile = sSrcPath + "20191214_FFVP_BirdsProtect.txt"
+    #sSrcFile = sSrcPath + "20191214_FFVP_ParcsNat.txt"
+    #sSrcFile = sSrcPath + "20191213_FFVP_sample_AIRSPACE_FRANCE_TXT_1911.txt"
     #sSrcFile = sSrcPath + "20191213_FFVP_AIRSPACE_FRANCE_TXT_1911.txt"
     #sSrcFile = sSrcPath + "20191214_BPa_FR-BPa4XCsoar.txt"
     #sSrcFile = sSrcPath + "20190401_WPa_ParcCevennes.txt"
