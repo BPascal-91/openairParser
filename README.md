@@ -1,9 +1,5 @@
 # openairParser
 
-**EN COURS DE DEVELOPPEMENT !!!**  
---> Les Pull-Request et Issues sont les bienvenues :)  
-
-
 Programme d'extraction et de formatage des données issues du format OpenAir (Airspace and Terrain description language).
 Un unique fichier au format standard AIXM v4.5 (Aeronautical Information Exchange Modele) est générée en sortie de traitement.  
 
@@ -22,7 +18,7 @@ pip install -r requirements.txt
 ## Utilisation
 Le programme produit un log et un fichier dans le dossier ./out/  
 ```
-openairParser v1.0.0  
+openairParser v1.2.0  
 -----------------  
 Aeronautical Information Exchange Model (AIXM) Converter  
 Call: openairParser <[drive:][path]filename>
@@ -39,3 +35,9 @@ With:
      OpenAir files: http://soaringweb.org/Airspace/  --or--  http://xcglobe.com/cloudapi/browser  -or-  http://cunimb.net/openair2map.php  
      AIXM output format: http://www.aixm.aero/
 ```
+
+
+## Credits
+- [Pascal Bazile](https://github.com/BPascal-91/) for complete writing of openairPaser
+- the many open source libraries, projects, and data sources used by this software (show file content of 'requirements.txt' for complete components detail)
+
