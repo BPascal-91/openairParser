@@ -18,8 +18,8 @@ oLog = bpaTools.Logger(___AppId___,__LogFile__)
 if len(sys.argv)<2:
     ##oLog.isDebug = True     # Write the debug-messages in the log filezzz
     sSrcPath = "../tst/"
-    sSrcFile = sSrcPath + "20191214_FFVP_BirdsProtect.txt"
-    #sSrcFile = sSrcPath + "20191214_FFVP_ParcsNat.txt"
+    #sSrcFile = sSrcPath + "20191214_FFVP_BirdsProtect.txt"
+    sSrcFile = sSrcPath + "20200704_FFVP_ParcsNat_BPa.txt"
     #sSrcFile = sSrcPath + "20191213_FFVP_sample_AIRSPACE_FRANCE_TXT_1911.txt"
     #sSrcFile = sSrcPath + "20191213_FFVP_AIRSPACE_FRANCE_TXT_1911.txt"
     #sSrcFile = sSrcPath + "20191214_BPa_FR-BPa4XCsoar.txt"
