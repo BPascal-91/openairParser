@@ -24,7 +24,7 @@ if len(sys.argv)<2:
     #sSrcFile = sSrcPath + "20191213_FFVP_AIRSPACE_FRANCE_TXT_1911.txt"
     #sSrcFile = sSrcPath + "20191214_BPa_FR-BPa4XCsoar.txt"
     #sSrcFile = sSrcPath + "20190401_WPa_ParcCevennes.txt"
-    #sSrcFile = sSrcPath + "20191210_BPa_ZonesComplementaires.txt"
+    #sSrcFile = sSrcPath + "20200705_BPa_ZonesComplementaires.txt"
     #sSrcFile = sSrcPath + "20200510_BPa_FR-ZSM_Protection-des-rapaces.txt"
     #------- appels standards ---
     sys.argv += [sSrcFile, "-CleanLog"]

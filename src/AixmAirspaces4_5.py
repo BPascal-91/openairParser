@@ -272,7 +272,7 @@ class AixmAirspaces:
         oXML = etree.Element("AIXM-Snapshot")
         attr_qname = etree.QName("http://www.w3.org/2001/XMLSchema-instance", "noNamespaceSchemaLocation")
         #oXML.set(attr_qname, "http://www.aixm.aero/schema/4.5/AIXM-Snapshot.xsd")
-        oXML.set(attr_qname, "./xsd-4.5b/AIXM-Snapshot.xsd")
+        oXML.set(attr_qname, "../_aixm_xsd-4.5b/AIXM-Snapshot.xsd")
         oXML.set("origin", "BPa")
         oXML.set("version", "4.5")
         oXML.set("created", bpaTools.getNowISO())
