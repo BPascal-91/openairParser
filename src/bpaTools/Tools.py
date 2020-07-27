@@ -31,12 +31,12 @@ def initEvent(sFile:str, oLog:logging=None, isSilent:bool=False) -> None:
         print(msg)
     return
 
-def getFileName(sFile:str) -> str:
+def getFileName(sFile) -> str:
     return os.path.basename(sFile).split(".")[0]
     
-
-def getFilePath(sFile:str) -> str:
-    return os.path.dirname(sFile) + "/"
+def getFilePath(sFile) -> str:
+    #return os.path.dirname(sFile) + "/"                  #Non-Fonctionnel sous Linux
+    return os.path.dirname(os.path.abspath(sFile)) + "/"  #Fonctionnel sous Linux
 
 def getNow() -> datetime:
     return datetime.datetime.now()
@@ -52,9 +52,8 @@ def getDate(date:datetime, sep:str="") -> str:
     return date.strftime(sFrmt)
 
 
-def getVersionFile() -> str:
-    versionFile = "_version.py"
-    fileContent = open(versionFile, "rt").read()
+def getVersionFile(versionPath="", versionFile="_version.py") -> str:
+    fileContent = open(versionPath + versionFile, "rt").read()
     token = r"^__version__ = ['\"]([^'\"]*)['\"]"
     oFound = re.search(token, fileContent, re.M)
     if oFound:
@@ -68,6 +67,7 @@ def readJsonFile(sFile:str) -> dict:
     if os.path.exists(sFile):
         jsonFile = open(sFile, "rt", encoding="utf-8")
         jdata = json.load(jsonFile)
+        jsonFile.close()
     else:
         jdata = {}
     return jdata
@@ -76,6 +76,14 @@ def readJsonFile(sFile:str) -> dict:
 def writeJsonFile(sFile:str, jdata:dict) -> None:
     jsonFile = open(sFile, "w", encoding="utf-8")
     json.dump(jdata, jsonFile)
+    jsonFile.close()
+    return
+
+
+def writeTextFile(sFile:str, stext:str):
+    textFile = open(sFile, "w", encoding="utf-8")
+    textFile.write(stext)
+    textFile.close()
     return
 
 

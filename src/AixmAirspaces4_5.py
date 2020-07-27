@@ -68,7 +68,7 @@ def getCoordonnees(aLine:list) -> (str,str):
         raise Exception(sHeader + sMsg + " / " + str(e))
 
 
-#########   Cirlce of Airespace border  ########
+#########   Cirlce of Airspace border  ########
 class AixmCircle4_5:
     def __init__(self) -> None:
         self.openairType:str = None
@@ -94,7 +94,7 @@ class AixmCircle4_5:
         
 
 
-#########   Vector of Airespace border  ########
+#########   Vector of Airspace border  ########
 class AixmAvx4_5:
     def __init__(self) -> None:
         self.openairType:str = None
@@ -155,13 +155,13 @@ class AixmAvx4_5:
             raise        
          
         
-###############   Airespace area  ###########
+###############   Airspace area  ###########
 class AixmAse4_5:
 
     def __init__(self) -> None:
         self.bBorderInProcess:bool = False
         
-        #---Airespace Header---
+        #---Airspace Header---
         self.sClass:str = None
         self.sType:str = None
         self.sName:str = None
@@ -178,7 +178,7 @@ class AixmAse4_5:
         self.valDistVerLower:int = None
         self.uomDistVerLower:str = None
         
-        #---Abd--- Airespace Borders
+        #---Abd--- Airspace Borders
         self.oBorder:list = list()
         return
 
@@ -243,7 +243,7 @@ class AixmAse4_5:
 
 
 
-###############   Airespaces factory  ###########
+###############   Airspaces factory  ###########
 class AixmAirspaces:
 
     def __init__(self, oLog:bpaTools.Logger=None) -> None:
