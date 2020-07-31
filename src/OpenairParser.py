@@ -19,11 +19,13 @@ if len(sys.argv)<2:
     ##oLog.isDebug = True     # Write the debug-messages in the log filezzz
     sSrcPath = "../tst/"
     #sSrcFile = sSrcPath + "20191214_FFVP_BirdsProtect.txt"
-    sSrcFile = sSrcPath + "20200704_FFVP_ParcsNat_BPa.txt"
+    #sSrcFile = sSrcPath + "20200704_FFVP_ParcsNat_BPa.txt"
     #sSrcFile = sSrcPath + "20191213_FFVP_sample_AIRSPACE_FRANCE_TXT_1911.txt"
     #sSrcFile = sSrcPath + "20191213_FFVP_AIRSPACE_FRANCE_TXT_1911.txt"
     #sSrcFile = sSrcPath + "20191214_BPa_FR-BPa4XCsoar.txt"
     #sSrcFile = sSrcPath + "20190401_WPa_ParcCevennes.txt"
+    #sSrcFile = sSrcPath + "20200729_SergeRenier_ParcNat_BaieDeSomme.txt"
+    sSrcFile = sSrcPath + "20200729_SergeRenier_ParcNat_Hourtin.txt"
     #sSrcFile = sSrcPath + "20200705_BPa_ZonesComplementaires.txt"
     #sSrcFile = sSrcPath + "20200510_BPa_FR-ZSM_Protection-des-rapaces.txt"
     #------- appels standards ---
