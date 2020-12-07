@@ -25,7 +25,7 @@ class OpenairReader:
         self.oAixm = AixmAirspaces4_5.AixmAirspaces(oLog)
         self.resetZone()
         self.oDebug = dict()
-        
+
         self.circleClockWise:str = None
         self.circleCenter:str = None
         return
@@ -55,10 +55,10 @@ class OpenairReader:
             self.oZone.sType = aLine[1]
         elif aLine[1] in ["Q"]:
             self.oZone.sClass = ""
-            self.oZone.sType = "R"           
+            self.oZone.sType = "R"
         elif aLine[1] in ["W", "VV"]:
             self.oZone.sClass = ""
-            self.oZone.sType = "W"            
+            self.oZone.sType = "W"
         elif aLine[1] in ["ZSM", "GP", "Bird", "Rapace"]:
             self.oZone.sClass = ""
             self.oZone.sType = "ZSM"
@@ -66,14 +66,14 @@ class OpenairReader:
         else:
             self.oLog.critical("parseClass error {}".format(aLine), outConsole=False)
         return
-    
-    
+
+
     def parseName(self, aLine:list) -> None:
         self.oZone.sName = " ".join(aLine[1:])
-        
+
         if aLine[1] in ["CTR", "CTR1", "CTR2", "TMA", "CTA", "R", "P", "LTA", "W", "VV", "ZSM", "GP", "Bird", "Rapace", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "AWY"]:
             self.oZone.sName = " ".join(aLine[2:])
-            
+
             if aLine[1]==self.oZone.sType:
                 True    #Ne rien faire
             elif aLine[1] in ["CTR", "TMA", "ZIT"]:
@@ -90,7 +90,7 @@ class OpenairReader:
                 self.oZone.sType = aLine[1]
             elif aLine[1] in ["W", "VV"]:
                 self.oZone.sClass = ""
-                self.oZone.sType = "W"            
+                self.oZone.sType = "W"
             elif aLine[1] in ["ZSM", "GP", "Bird", "Rapace"]:
                 self.oZone.sClass = ""
                 self.oZone.sType = "ZSM"
@@ -102,7 +102,7 @@ class OpenairReader:
 
     def parseAlt(self, aLine:list) -> None:
         codeDistVer = valDistVer = uomDistVer = None
-        
+
         if aLine[1].upper() == "FL":                    #aLine = ['AH','FL','195']
             codeDistVer = "STD"
             valDistVer = aLine[2]
@@ -145,14 +145,14 @@ class OpenairReader:
                     codeDistVer = "ALT"
                     valDistVer = int(int(aLine[1]) / ft)   #Convert meter 2 feet
                     uomDistVer = "FT"
-                else:   
+                else:
                     self.oLog.critical("parseAlt error {}".format(aLine), outConsole=False)
             else:
                 self.oLog.critical("parseAlt error {}".format(aLine), outConsole=False)
 
         if ("ASFC" in aLine) or ("AGL" in aLine):
             codeDistVer = "HEI"
-        
+
         if aLine[0] == "AH":
             self.oZone.sUpper = " ".join(aLine[1:])
             self.oZone.codeDistVerUpper = codeDistVer
@@ -164,41 +164,41 @@ class OpenairReader:
             self.oZone.valDistVerLower = valDistVer
             self.oZone.uomDistVerLower = uomDistVer
         return
-    
-    
+
+
     def parseLine(self, line:str) -> None:
         if line == "":
             return
-        
+
         line = line.replace(","," ")     #Cleaning
         line = line.replace("\t"," ")    #Cleaning
         line = line.replace("  "," ")    #Cleaning
         aLine = line.split(" ")          #Tokenize
         if "" in aLine:
             aLine = list(filter(None, aLine))
-        
+
         #### Header - Traitement des entêtes de zones
         if aLine[0] == "AC":
             if self.oZone.bBorderInProcess:
                 self.resetZone()              #Reset current object
             self.parseClass(aLine)
             return
-            
+
         elif aLine[0] == "AN":
             if self.oZone.bBorderInProcess:
                 self.resetZone()              #Reset current object
             self.parseName(aLine)
             return
-            
+
         elif aLine[0] in ["AH", "AL"]:
             if self.oZone.bBorderInProcess:
                 self.resetZone()              #Reset current object
             self.parseAlt(aLine)
             return
-            
+
         elif aLine[0] in ["SP", "SB", "AT", "AY"]:
             return    #Pas besoin de récupération...
-        
+
         else:
             if not self.oZone.isCorrectHeader():
                 self.oLog.critical("Header error before line {}".format(line), outConsole=False)
@@ -209,16 +209,16 @@ class OpenairReader:
             self.oZone.bBorderInProcess = True
             self.oAixm.addAirspace(self.oZone)
             #self.oLog.info("{}".format(self.oZone.getAllProperties()), outConsole=True)
-        
+
         #### Border - Traitement des bordures géographiques de zones
         try:
             if aLine[0] in ["AC", "AN", "AH", "AL", "SP", "SB"]:
                 None    #Traité plus haut dans la parties 'header'
-            
+
             elif aLine[0] == "DP":              #DP = Polygon pointC - sample 'DP 44:54:52 N 005:02:35 E'
                 self.oZone.makePoint(aLine)
-                
-            elif aLine[0] == "V":               #V = Variable assignment           
+
+            elif aLine[0] == "V":               #V = Variable assignment
                 #V x=n;     Variable assignment.
                 #  D={+|-}         : sets direction for: DA and DB records
                 #                  : '-' means counterclockwise direction; '+' is the default
@@ -233,30 +233,30 @@ class OpenairReader:
                     self.circleCenter = aLine
                 else:
                     self.oLog.critical("Type of line error: {0} - Airspace={1}".format(line, self.oZone.getDesc()), outConsole=False)
-           
+
             elif aLine[0] == "DC":              #DC radius; draw a circle (center taken from the previous V X=...; radius in nm; sample 'DC 3'
                 self.oZone.makeCircle(self.circleCenter, aLine[1])
                 self.circleClockWise = "+"      #Reset the default value
-                
+
             elif aLine[0] == "DB":              #Just an Arc; sample 'DB 44:54:52 N 005:02:35 E,44:55:20 N 004:54:10 E'
                 if "" in aLine:
                     aLine = list(filter(None, aLine))
                 self.oZone.makeArc(self.circleCenter, aLine, self.circleClockWise)
                 self.circleClockWise = "+"      #Reset the default value
-                
+
             else:
                 self.oLog.critical("Type of line error: {0} - Airspace={1}".format(line, self.oZone.getDesc()), outConsole=False)
 
         except Exception as e:
             self.oLog.critical("Error: {0} - {1} - Airspace={2}".format(str(e), line, self.oZone.getDesc()), outConsole=False)
             #pass
-        
+
         return
-    
-    
-    def parseFile(self, sSrcFile:str) -> None:   
+
+
+    def parseFile(self, sSrcFile:str) -> None:
         #Execution des traitements
-        fopen = open(sSrcFile, "rt", encoding="utf-8", errors="ignore")
+        fopen = open(sSrcFile, "rt", encoding="cp1252", errors="ignore")     #old "utf-8"
         lines = fopen.readlines()
         sMsg = "Parsing openair file - {}".format(sSrcFile)
         self.oLog.info("Debug object {}".format(sMsg), outConsole=True)
@@ -267,14 +267,13 @@ class OpenairReader:
             lig = cleanLine(line)
             self.parseLine(lig)
             barre.update(idx)
-            
+
         barre.reset()
         print()
         self.oLog.info("--> {} Openair parsing zones".format(len(self.oAixm.oAirspaces)), outConsole=True)
-        
+
         if self.oLog.isDebug:
             self.oLog.debug("Debug object {}".format(self.oDebug.keys()), outConsole=False)
         return
 
 
-    

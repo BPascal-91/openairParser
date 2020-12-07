@@ -26,11 +26,15 @@ if len(sys.argv)<2:
     #sSrcFile = sSrcPath + "20190401_WPa_ParcCevennes.txt"
     #sSrcFile = sSrcPath + "20200704_RegisF_ParcsNat_ChampagneBourgogne.txt"
     #sSrcFile = sSrcPath + "20200805_PatrickB_ParcsNat_ChampagneBourgogne-BPa.txt"
-    sSrcFile = sSrcPath + "20200810_BPa_ParcsNat_ChampagneBourgogne.txt"
+    #sSrcFile = sSrcPath + "20200810_BPa_ParcsNat_ChampagneBourgogne.txt"
     #sSrcFile = sSrcPath + "20200729_SergeR_ParcNat_BaieDeSomme.txt"
     #sSrcFile = sSrcPath + "20200729_SergeR_ParcNat_Hourtin.txt"
-    #sSrcFile = sSrcPath + "20200802_BPa_ZonesComplementaires.txt"
+    #sSrcFile = sSrcPath + "20201108_BPa_ZonesComplementaires.txt"
     #sSrcFile = sSrcPath + "20200510_BPa_FR-ZSM_Protection-des-rapaces.txt"
+    #sSrcFile = sSrcPath + "20190510_FFVP_ParcBauges.txt"
+    #sSrcFile = sSrcPath + "20191129_FFVL_ParcPassy.txt"
+    #sSrcFile = sSrcPath + "20200120_FFVL_ParcAnnecyMaraisBoutDuLac.txt"
+    sSrcFile = sSrcPath + "20201204_FFVL_ZonesComplementaires.txt"
     #------- appels standards ---
     sys.argv += [sSrcFile, "-CleanLog"]
     #sys.argv += ["-h"]
@@ -53,7 +57,7 @@ def syntaxe() -> None:
     print("     AIXM output format: http://www.aixm.aero/")
     return
 
-    
+
 ####  Traitements  #####
 sSrcFile:str = sys.argv[1]                              #Nom de fichier
 oOpts:dict = bpaTools.getCommandLineOptions(sys.argv)   #Arguments en dictionnaire
@@ -66,9 +70,9 @@ if "-h" in oOpts:
 else:
     if "-CleanLog" in oOpts:
         oLog.resetFile()                            #Clean du log si demandé
-    
+
     bpaTools.createFolder(__OutPath__)              #Init dossier de sortie
-   
+
     #Execution des traitements
     oParser = OpenairReader.OpenairReader(oLog)
     oParser.parseFile(sSrcFile)
