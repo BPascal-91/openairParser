@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
 
-import bpaTools
 import math
 from pyproj import Proj, transform
+from lxml import etree
+
+aixmParserLocalSrc  = "../../aixmParser/src/"
+try:
+    import bpaTools
+except ImportError:
+    ### Include local modules/librairies  ##
+    import os, sys
+    module_dir = os.path.dirname(__file__)
+    sys.path.append(os.path.join(module_dir, aixmParserLocalSrc))
+    import bpaTools
 
 
 pWGS = Proj("epsg:4326")            # EPSG:4326 = WGS84 / Geodetic coordinate system for World  :: Deprecated format --> Proj(init="epsg:4326")
@@ -18,7 +28,7 @@ def getCoordonnees(aLine:list) -> (str,str):
         if aLine[0] == "V" and aLine[1][:2] == "X=":
             #Openair format - V X=48:36:03 N 003:49:00 W
             aLine[1] = aLine[1][2:]     #Cleaning start coords
-            
+
         if aLine[0] in ["DP", "DB", "V"]:
             #Openair format - DP 47:36:04 N 000:25:56 W
             #Openair format - DP 47:36:04 N 000:25:56W
@@ -32,36 +42,36 @@ def getCoordonnees(aLine:list) -> (str,str):
             #Openair format - V 48:36:03 N 003:49:00W
             #Openair format - V 48:36:03N 003:49:00 W
             #Openair format - V 48:36:03N 003:49:00W
-            
+
             if len(aLine[1])>1 and aLine[1][-1].upper() in aLat:
                 sLat = aLine[1]
             elif aLine[2].upper() in aLat:
                 sLat = aLine[1]+aLine[2]
-                
+
             if len(aLine[2])>1 and aLine[2][-1].upper() in aLon:
                 sLon = aLine[2]
             if sLon==None and len(aLine) > 2:
                 if aLine[3][-1].upper() in aLon:
-                    if len(aLine[3])==1: 
+                    if len(aLine[3])==1:
                         sLon = aLine[2]+aLine[3]
                     else:
                         sLon = aLine[3]
             if sLon==None and len(aLine) > 3:
                 if aLine[4].upper() in aLon:
-                    if len(aLine[4])==1: 
+                    if len(aLine[4])==1:
                         sLon = aLine[3]+aLine[4]
                     else:
                         sLon = aLine[4]
 
             if sLat==None or sLon==None:
                 raise Exception("?")
-                
+
             #Calcul en D.d pour reformattage systématique en DMS.d
             lat, lon = bpaTools.geoStr2dd(sLat, sLon)
             sLat, sLon = bpaTools.geoDd2dms(lat,"lat" ,lon,"lon", digit=4)
-            
+
         return sLat, sLon
-    
+
     except Exception as e:
         sHeader = "[" + bpaTools.getFileName(__file__) + "." + getCoordonnees.__name__ + "()] "
         sMsg = "/!\ Parsing Line Error - {}".format(aLine)
@@ -91,7 +101,6 @@ class AixmCircle4_5:
             return True
         except:
             raise
-        
 
 
 #########   Vector of Airspace border  ########
@@ -123,7 +132,6 @@ class AixmAvx4_5:
         except:
             raise
 
-        
     def loadArc(self, aCenter:list, aPoint2Point:list, circleClockWise:str) -> bool:
         #aCenter = DP 47:36:04 N 000:25:56 W
         #aPoint2Point = 'DB 44:54:52 N 005:02:35 E 44:55:20 N 004:54:10 E'
@@ -133,7 +141,7 @@ class AixmAvx4_5:
                 self.codeType = "CCA"       #Clockwise Arc
             else:
                 self.codeType = "CWA"       #Counter Clockwise Arc
-            
+
             #Point d'entrée de l'arc
             lat, lon = getCoordonnees(aPoint2Point)
             self.geoLat = lat
@@ -142,7 +150,7 @@ class AixmAvx4_5:
             lat, lon = getCoordonnees(aCenter)
             self.geoLatArc = lat
             self.geoLongArc = lon
-            
+
             # Détermination du rayon de l'arc
             latC, lonC = bpaTools.geoStr2dd(self.geoLatArc, self.geoLongArc)
             latS, lonS = bpaTools.geoStr2dd(self.geoLat, self.geoLong)
@@ -152,23 +160,123 @@ class AixmAvx4_5:
             self.valRadiusArc = round(radius/nm,2)      # Nautic Mile
             return True
         except:
-            raise        
-         
-        
+            raise
+
+###############   Time schedule for Airspace area  ###########
+class AixmTimsh4_5:
+    """ standard aixm-4.5 output samples              // associate to POAF convertion samples
+		<Att>
+			<codeWorkHr>TIMSH</codeWorkHr>
+		<Timsh>                                       '*ATimes {"1": ["UTC(01/01->31/12)", "WD(08:00->18:00)"], "2":...}'
+			<codeTimeRef>UTCW</codeTimeRef>
+			<dateValidWef>01-01</dateValidWef>
+			<dateValidTil>31-12</dateValidTil>
+			<codeDay>WD</codeDay>
+			<codeDayTil>WD</codeDayTil>
+			<timeWef>08:00</timeWef>
+			<timeTil>18:00</timeTil>
+		</Timsh>
+		<Timsh>                                       '*ATimes {{"1":... , "2": ["UTC(EDLST->SDLST)", "SAT to SUN(08:30->16:00)"]}'
+			<codeTimeRef>UTC</codeTimeRef>
+			<dateValidWef>EDLST</dateValidWef>
+			<dateValidTil>SDLST</dateValidTil>
+			<codeDay>SAT</codeDay>
+			<codeDayTil>SUN</codeDayTil>
+			<timeWef>08:30</timeWef>
+			<timeTil>16:00</timeTil>
+		</Timsh>
+        <Timsh>                                       '*ATimes {{"1":... , "2":... , "3": ["UTC(01/01->31/12)", "ANY(SR/30/E->SS/30/L)"]}'
+			<codeTimeRef>UTC</codeTimeRef>
+			<dateValidWef>01-01</dateValidWef>
+			<dateValidTil>31-12</dateValidTil>
+			<codeDay>ANY</codeDay>
+			<codeEventWef>SR</codeEventWef>
+			<timeRelEventWef>30</timeRelEventWef>
+			<codeCombWef>E</codeCombWef>
+			<codeEventTil>SS</codeEventTil>
+			<timeRelEventTil>30</timeRelEventTil>
+			<codeCombTil>L</codeCombTil>
+		</Timsh>
+    </Att>
+    """
+
+    def __init__(self) -> None:
+        self.sCodeTimeRef:str = None
+        self.sDateValidWef:str = None
+        self.sDateValidTil:str = None
+        self.sCodeDay:str = None
+        self.sCodeDayTil:str = None
+        self.sTimeWef:str = None
+        self.sTimeTil:str = None
+        self.sCodeEventWef:str = None
+        self.sTimeRelEventWef:str = None
+        self.sCodeCombWef:str = None
+        self.sCodeEventTil:str = None
+        self.sTimeRelEventTil:str = None
+        self.sCodeCombTil:str = None
+
+    def getXml(self) -> etree:
+        oTsh:etree = etree.Element("Timsh")
+        if not self.sCodeTimeRef in [None, ""]:
+            oItem = etree.SubElement(oTsh, "codeTimeRef")
+            oItem.text = self.sCodeTimeRef
+        if not self.sDateValidWef in [None, ""]:
+            oItem = etree.SubElement(oTsh, "dateValidWef")
+            oItem.text = self.sDateValidWef.replace("/","-")
+        if not self.sDateValidTil in [None, ""]:
+            oItem = etree.SubElement(oTsh, "dateValidTil")
+            oItem.text = self.sDateValidTil.replace("/","-")
+        if not self.sCodeDay in [None, ""]:
+            oItem = etree.SubElement(oTsh, "codeDay")
+            oItem.text = self.sCodeDay
+        if not self.sCodeDayTil in [None, ""]:
+            oItem = etree.SubElement(oTsh, "codeDayTil")
+            oItem.text = self.sCodeDayTil
+        if not self.sTimeWef in [None, ""]:
+            oItem = etree.SubElement(oTsh, "timeWef")
+            oItem.text = self.sTimeWef
+        if not self.sTimeTil in [None, ""]:
+            oItem = etree.SubElement(oTsh, "timeTil")
+            oItem.text = self.sTimeTil
+        if not self.sCodeEventWef in [None, ""]:
+            oItem = etree.SubElement(oTsh, "codeEventWef")
+            oItem.text = self.sCodeEventWef
+        if not self.sTimeRelEventWef in [None, ""]:
+            oItem = etree.SubElement(oTsh, "timeRelEventWef")
+            oItem.text = self.sTimeRelEventWef
+        if not self.sCodeCombWef in [None, ""]:
+            oItem = etree.SubElement(oTsh, "codeCombWef")
+            oItem.text = self.sCodeCombWef
+        if not self.sCodeEventTil in [None, ""]:
+            oItem = etree.SubElement(oTsh, "codeEventTil")
+            oItem.text = self.sCodeEventTil
+        if not self.sTimeRelEventTil in [None, ""]:
+            oItem = etree.SubElement(oTsh, "timeRelEventTil")
+            oItem.text = self.sTimeRelEventTil
+        if not self.sCodeCombTil in [None, ""]:
+            oItem = etree.SubElement(oTsh, "codeCombTil")
+            oItem.text = self.sCodeCombTil
+        return oTsh
+
 ###############   Airspace area  ###########
 class AixmAse4_5:
 
     def __init__(self) -> None:
         self.bBorderInProcess:bool = False
-        
+
         #---Airspace Header---
         self.sClass:str = None
         self.sType:str = None
         self.sName:str = None
         self.sUpper:str = None
         self.sLower:str = None
-        
+
         #---Ase objet--- Complementary items for Aixm 4.5 format
+        self.sCodeActivity:str = None
+        self.sDesc:str = None
+        self.sCodeWorkHr:str = None
+        self.sRmkWorkHr:str = None
+        self.oTimesh:list = list()
         self.AseUid_mid:str = None
         self.codeId = " "                    #Défaut = Espace pour alimenter cet élément Aixm
         self.codeDistVerUpper:str = None
@@ -177,9 +285,45 @@ class AixmAse4_5:
         self.codeDistVerLower:str = None
         self.valDistVerLower:int = None
         self.uomDistVerLower:str = None
-        
+
         #---Abd--- Airspace Borders
         self.oBorder:list = list()
+        return
+
+    #Samples of source line:
+    #   '*ATimes {"1": ["UTC(01/01->31/12)", "ANY(00:00->23:59)"]}'
+    #   '*ATimes {"1": ["UTC(01/01->01/10)", "ANY(00:00->23:59)"], "2": ["UTC(01/12->31/12)", "ANY(00:00->23:59)"]}'
+    #   '*ATimes {"1": ["UTC(01/01->31/12)", "MON to FRI(08:30->16:00)"]}'
+    #   '*ATimes {"1": ["UTC(EDLST->SDLST)", "MON to FRI(07:00->21:00)"], "2": ["UTC(SDLST->EDLST)", "MON to FRI(06:00->22:00)"]}'
+    #   '*ATimes {"1": ["UTC(01/01->31/12)", "ANY(SR/30/E->SS/30/L)"]}'
+    def addTimeSheduler(self, oATimes:dict) -> None:
+        self.oTimesh = []     #Reset (if necesary...)
+        for sKey, aTime in oATimes.items():
+            oTimeSch = AixmTimsh4_5()       #New instence of...
+            self.oTimesh.append(oTimeSch)   #Add to list
+
+            #Content of aTime[0] --> "UTC(01/01->31/12)" or "UTC(EDLST->SDLST)"
+            oTimeSch.sCodeTimeRef:str = bpaTools.getLeftOf(aTime[0], "(")
+            sDates:str = bpaTools.getContentOf(aTime[0], "(", ")")
+            oTimeSch.sDateValidWef, oTimeSch.sDateValidTil = sDates.split("->")
+
+            #Content of aTime[1] --> "WD(08:00->18:00)" or "SAT to SUN(08:30->16:00)" or "ANY(SR/30/E->SS/30/L)"
+            sCodeDays:str = bpaTools.getLeftOf(aTime[1], "(")
+            if sCodeDays.find(" to ")>0:    #case "SAT to SUN(08:30->16:00)"
+                oTimeSch.sCodeDay, oTimeSch.sCodeDayTil = sCodeDays.split(" to ")
+            else:                           #case "WD(08:00->18:00)" or "ANY(SR/30/E->SS/30/L)"
+                oTimeSch.sCodeDay = sCodeDays
+                oTimeSch.sCodeDayTil = sCodeDays
+            sDates:str = bpaTools.getContentOf(aTime[1], "(", ")")
+            sDateDeb, sDateFin = sDates.split("->")
+            if sDateDeb.find("/")>0:    #case "(SR/30/E->SS/30/L)"
+                oTimeSch.sCodeEventWef, oTimeSch.sTimeRelEventWef, oTimeSch.sCodeCombWef = sDateDeb.split("/")
+            else:                       #case "(08:00->18:00)"
+                oTimeSch.sTimeWef = sDateDeb
+            if sDateFin.find("/")>0:    #case "(SR/30/E->SS/30/L)"
+                oTimeSch.sCodeEventTil, oTimeSch.sTimeRelEventTil, oTimeSch.sCodeCombTil = sDateFin.split("/")
+            else:                       #case "(08:00->18:00)"
+                oTimeSch.sTimeTil = sDateFin
         return
 
     def isCorrectHeader(self) -> bool:
@@ -200,15 +344,15 @@ class AixmAse4_5:
         else:
             ret = "[{0}] {1}".format(self.sClass, self.sName)
         return ret
-    
+
     def getAlt(self) -> str:
         ret = "[{0}/{1}]".format(self.sLower, self.sUpper)
-        return ret    
+        return ret
 
     def getDesc(self) -> str:
         ret = "{0} {1}".format(self.getLongName(), self.getAlt())
         return ret
-    
+
     def getAllProperties(self) -> str:
         ret = "id={0} - {1}\ncodeUpper={2} valUpper={3} uomUpper={4}\ncodeLower={5} valLower={6} uomLower={7}".format(self.getID(), self.getDesc(), \
                 self.codeDistVerUpper, \
@@ -217,7 +361,7 @@ class AixmAse4_5:
                 self.codeDistVerLower, \
                 self.valDistVerLower,  \
                 self.uomDistVerLower)
-        return ret    
+        return ret
 
     def makePoint(self, aLine:list) -> AixmAvx4_5:
         try:
@@ -233,14 +377,12 @@ class AixmAse4_5:
         if oArc.loadArc(aCenter, aPoint2Point, circleClockWise):
             self.oBorder.append(oArc)
         return oArc
-    
+
     def makeCircle(self, aCenter:list, fRadius:float) -> AixmCircle4_5:
         oCircle = AixmCircle4_5()
         if oCircle.loadCircle(aCenter, fRadius):
             self.oBorder.append(oCircle)
         return oCircle
-    
-
 
 
 ###############   Airspaces factory  ###########
@@ -255,19 +397,18 @@ class AixmAirspaces:
     def getFactoryAirspace(self) -> AixmAse4_5:
         oAS = AixmAse4_5()    #New object
         return oAS
-    
+
     def addAirspace(self, oAS:AixmAse4_5) -> AixmAse4_5:
         self.oAirspaces.append(oAS)             #Add object in factoty list
-        oAS.AseUid_mid = len(self.oAirspaces)   #Create object identifier 
+        oAS.AseUid_mid = len(self.oAirspaces)   #Create object identifier
         return oAS
-    
+
     def parse2Aixm4_5(self, sOutPath:str, sSrcFile:str) -> None:
-        from lxml import etree
         oAS:AixmAse4_5 = None
-        
+
         #Destination file
         sDstFile =  sOutPath + bpaTools.getFileName(sSrcFile) + "_aixm45.xml"
-        
+
         #AIXM 4.5 XML Header file
         oXML = etree.Element("AIXM-Snapshot")
         attr_qname = etree.QName("http://www.w3.org/2001/XMLSchema-instance", "noNamespaceSchemaLocation")
@@ -278,10 +419,13 @@ class AixmAirspaces:
         oXML.set("created", bpaTools.getNowISO())
         oXML.set("effective", bpaTools.getNowISO())
         #print(etree.tostring(oXML, pretty_print=True))
-        
+
         #Ajout des zones aériennes
         for oAS in self.oAirspaces:
+            #<Ase> bloc
             oAse = etree.SubElement(oXML, "Ase")
+
+            #<AseUid> bloc
             oAseUid = etree.SubElement(oAse, "AseUid")
             oAseUid.set("mid", str(oAS.getID()))
             oCodeType = etree.SubElement(oAseUid, "codeType")
@@ -291,8 +435,13 @@ class AixmAirspaces:
                 oCodeType.text = oAS.sType
             oCodeId = etree.SubElement(oAseUid, "codeId")
             oCodeId.text = oAS.codeId
+
+            #<Ase> bloc
             oItem = etree.SubElement(oAse, "txtName")
-            oItem.text = str(oAS.sName)
+            oItem.text = bpaTools.cleanAccent(oAS.sName)
+            if not oAS.sCodeActivity in [None, ""]:
+                oItem = etree.SubElement(oAse, "codeActivity")
+                oItem.text = oAS.sCodeActivity
             if not oAS.sClass in [None, ""]:
                 oItem = etree.SubElement(oAse, "codeClass")
                 oItem.text = oAS.sClass
@@ -308,7 +457,28 @@ class AixmAirspaces:
             oItem.text = str(oAS.valDistVerLower)
             oItem = etree.SubElement(oAse, "uomDistVerLower")
             oItem.text = oAS.uomDistVerLower
-            
+
+            #<Att> bloc
+            if not oAS.sCodeWorkHr in [None, ""]:
+                oAtt = etree.SubElement(oAse, "Att")
+                oItem = etree.SubElement(oAtt, "codeWorkHr")
+                oItem.text = oAS.sCodeWorkHr
+
+                #<Timsh> bloc
+                for o in oAS.oTimesh:
+                    oAtt.append(o.getXml())
+
+                #<Att> bloc
+                if not oAS.sRmkWorkHr in [None, ""]:
+                    oItem = etree.SubElement(oAtt, "txtRmkWorkHr")
+                    oItem.text = oAS.sRmkWorkHr
+
+            #<Ase> bloc
+            if not oAS.sDesc in [None, ""]:
+                oItem = etree.SubElement(oAse, "txtRmk")
+                oItem.text = oAS.sDesc
+
+
         #print(etree.tostring(oXML, pretty_print=True))
         #Ajout des bordures de zones aériennes
         for oAS in self.oAirspaces:
@@ -324,7 +494,7 @@ class AixmAirspaces:
                 oCodeType.text = oAS.sType
             oCodeId = etree.SubElement(oAseUid, "codeId")
             oCodeId.text = oAS.codeId
-            
+
             for oBD in oAS.oBorder:
                 if isinstance(oBD, AixmAvx4_5):
                     oAvx = etree.SubElement(oAbd, "Avx")
@@ -341,7 +511,7 @@ class AixmAirspaces:
                     oCodeDatum.text = oBD.codeDatum
                     if not oBD.geoLatArc is None:
                         oGeoLatArc = etree.SubElement(oAvx, "geoLatArc")
-                        oGeoLatArc.text = oBD.geoLatArc                    
+                        oGeoLatArc.text = oBD.geoLatArc
                         oGeoLongArc = etree.SubElement(oAvx, "geoLongArc")
                         oGeoLongArc.text = oBD.geoLongArc
                         oValRadiusArc = etree.SubElement(oAvx, "valRadiusArc")
@@ -365,6 +535,6 @@ class AixmAirspaces:
         #Creation du fichier xml
         oTree = etree.ElementTree(oXML)
         oTree.write(sDstFile, pretty_print=True, xml_declaration=True, encoding="utf-8")
-        
+
         return
-    
+

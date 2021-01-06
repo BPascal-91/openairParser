@@ -1,8 +1,18 @@
 #!/usr/bin/env python3
 
 import sys
-import bpaTools
 import OpenairReader
+
+aixmParserLocalSrc  = "../../aixmParser/src/"
+try:
+    import bpaTools
+except ImportError:
+    ### Include local modules/librairies  ##
+    import os  #, sys
+    module_dir = os.path.dirname(__file__)
+    sys.path.append(os.path.join(module_dir, aixmParserLocalSrc))
+    import bpaTools
+
 
 ### Context applicatif
 bpaTools.ctrlPythonVersion()
@@ -34,7 +44,10 @@ if len(sys.argv)<2:
     #sSrcFile = sSrcPath + "20190510_FFVP_ParcBauges.txt"
     #sSrcFile = sSrcPath + "20191129_FFVL_ParcPassy.txt"
     #sSrcFile = sSrcPath + "20200120_FFVL_ParcAnnecyMaraisBoutDuLac.txt"
-    sSrcFile = sSrcPath + "20201204_FFVL_ZonesComplementaires.txt"
+    #sSrcFile = sSrcPath + "20201204_FFVL_ZonesComplementaires.txt"
+    #sSrcFile = sSrcPath + "20210101_sensitivearea_openair_BPa-ANSI.txt"
+    #sSrcFile = sSrcPath + "20210104_FFVL_ParcBauges_BPa.txt"
+    sSrcFile = sSrcPath + "20210106_LTA-FrenchSurfaceS-HR_BPa.txt"
     #------- appels standards ---
     sys.argv += [sSrcFile, "-CleanLog"]
     #sys.argv += ["-h"]
