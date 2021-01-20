@@ -32,13 +32,19 @@ class OpenairReader:
     def __init__(self, oLog:bpaTools.Logger=None) -> None:
         bpaTools.initEvent(__file__, oLog)
         self.oLog = oLog                    #Log file
-        self.oAixm = AixmAirspaces4_5.AixmAirspaces(oLog)
+        self.oAixm:AixmAirspaces4_5.AixmAirspaces = AixmAirspaces4_5.AixmAirspaces(oLog)
         self.resetZone()
         self.oDebug = dict()
         self.circleClockWise:str = None
         self.circleCenter:str = None
+        self.sFilterClass:list = None       #Set Class filter - samples: ["ZSM"] or ["ZSM","GP"]
+        self.sFilterType:list = None        #Set Type  filter - samples: ["RMZ"] or ["RMZ","TMZ"]
+        self.sFilterName:list = None        #Set Name  filter -associate with bFilterNameLike=True  - samples: ["LYON"] or ["LYON","CHAMBERY","ANNECY"]
+        self.bFilterNameLike = True         #Set Name  filter -associate with bFilterNameLike=False - samples: ["R 30 A"] or ["R 30 A","R 331","ZIT 11 (CREYS MALVILLE)","ZIT 14 (Grenoble)"]
+        self.bFilterClassFound:bool = True  #Default value
+        self.bFilterTypeFound:bool = True  #Default value
+        self.bFilterNameFound:bool = True  #Default value
         return
-
 
     def resetZone(self) -> None:
         self.oZone:AixmAirspaces4_5.AixmAse4_5 = self.oAixm.getFactoryAirspace()
@@ -51,55 +57,66 @@ class OpenairReader:
             self.oZone.sClass = aLine[1]
             self.oZone.sType = "CLASS"
         elif aLine[1] in ["CTR", "TMA", "LTA"]:
-            self.oZone.sClass = "D"
+            self.oZone.sClass = "D"                             #Default value
             self.oZone.sType = aLine[1]
         elif aLine[1] in ["CTR1", "CTR2"]:
-            self.oZone.sClass = "D"
+            self.oZone.sClass = "D"                             #Default value
             self.oZone.sType = "CTR"
         elif aLine[1] in ["CTA", "AWY"]:
-            self.oZone.sClass = "A"
+            self.oZone.sClass = "A"                             #Default value
             self.oZone.sType = aLine[1]
-        elif aLine[1] in ["R", "P", "ZIT", "TMZ", "RMZ"]:
+        elif aLine[1] in ["R", "ZRT", "P", "ZIT", "CBA"]:
             self.oZone.sClass = ""
             self.oZone.sType = aLine[1]
+        elif aLine[1] in ["TMZ", "RMZ"]:
+            self.oZone.sClass = "G"
+            self.oZone.sType = "RAS"
+            self.oZone.sLocalType = aLine[1]
         elif aLine[1] in ["Q"]:
             self.oZone.sClass = ""
             self.oZone.sType = "D"                              #D [Danger Area.]
         elif aLine[1] in ["W", "VV"]:
             self.oZone.sClass = ""
-            self.oZone.sType = "W"                              #W [Warning Area.]
+            self.oZone.sType = "D-OTHER"
             self.oZone.sCodeActivity = "GLIDER"
         elif aLine[1] in ["GP"]:
             self.oZone.sClass = ""
             self.oZone.sType = "PROTECT"                        #PROTECT [Airspace protected from specific air traffic.]
             self.oZone.sCodeActivity = "FAUNA"                  #pour création d'un Parc-Naturel
-            self.oZone.codeId = aLine[1].upper()
+            self.oZone.sId = aLine[1].upper()
         elif aLine[1] in ["ZSM", "MZS", "Bird", "Rapace"]:      #ZSM [Zone-Sensibilité-Majeur] / MSZ [Major-Sensibility-Zone]
             self.oZone.sClass = ""
             self.oZone.sType = "PROTECT"                        #PROTECT [Airspace protected from specific air traffic.]
             self.oZone.sCodeActivity = None                     #pour création d'une ZSM [Zone-Sensibilité-Majeur]
-            self.oZone.codeId = aLine[1].upper()
+            self.oZone.sId = aLine[1].upper()
         else:
-            self.oLog.critical("parseClass error {}".format(aLine), outConsole=False)
+            self.oZone.sClass = ""             #Default value
+            self.oZone.sType = aLine[1]
+            self.oLog.warning("parseClass() default affected values {0}".format(aLine), outConsole=False)
         return
 
     #Sample of line: 'AN Parc du Jura (partie Sud)'
-    def parseName(self, aLine:list) -> None:
-        self.oZone.sName = " ".join(aLine[1:])
+    def parseName(self, aLine:list, sLine:str) -> None:
+        sLine = sLine[len(aLine[0])+1:]
+        sLine = sLine.replace("\t"," ")             #Cleaning
+        sLine = sLine.replace("  "," ")             #Cleaning
+        sLine = sLine.replace(" (FAUNA)", "")       #Cleaning
+        sLine = sLine.replace(" (GLIDER)", "")      #Cleaning
+        sLine = sLine.replace(" (SeeNotam)", "")    #Cleaning
 
-        if aLine[1] in ["CTR", "CTR1", "CTR2", "TMA", "CTA", "R", "P", "LTA", "W", "VV", "ZSM", "MSZ", "GP", "Bird", "Rapace", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ", "AWY"]:
-            self.oZone.sName = " ".join(aLine[2:])
+        if aLine[1] in ["CTR", "CTR1", "CTR2", "TMA", "CTA", "R", "P", "Q", "LTA", "W", "VV", "ZSM", "MSZ", "GP", "Bird", "Rapace", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ", "AWY"]:
+            sLine = sLine.replace(aLine[1] + " ", "")    #Cleaning
 
             if aLine[1]==self.oZone.sType:
                 True    #Ne rien faire
-            elif aLine[1] in ["CTR", "TMA", "LTA"]:
-                self.oZone.sClass = "D"
+            elif aLine[1] in ["CTR", "TMA", "LTA", "CBA"]:
+                #self.oZone.sClass = "D"                        #No change class!
                 self.oZone.sType = aLine[1]
             elif aLine[1] in ["CTR1", "CTR2"]:
-                self.oZone.sClass = "D"
+                #self.oZone.sClass = "D"                        #No change class!
                 self.oZone.sType = "CTR"
             elif aLine[1] in ["CTA", "AWY"]:
-                self.oZone.sClass = "A"
+                #self.oZone.sClass = "A"                        #No change class!
                 self.oZone.sType = aLine[1]
             elif aLine[1] in ["R", "P", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ"]:
                 self.oZone.sClass = ""
@@ -112,13 +129,15 @@ class OpenairReader:
                 self.oZone.sClass = ""
                 self.oZone.sType = "PROTECT"                    #PROTECT [Airspace protected from specific air traffic.]
                 self.oZone.sCodeActivity = "FAUNA"
-                self.oZone.codeId = aLine[1].upper()
+                self.oZone.sId = aLine[1].upper()
             elif aLine[1] in ["ZSM", "MSZ", "GP", "Bird", "Rapace"]:
                 self.oZone.sClass = ""
                 self.oZone.sType = "ZSM"                        #ZSM [Zone-Sensibilité-Majeur] / MSZ [Major-Sensibility-Zone]
-                self.oZone.codeId = aLine[1].upper()
+                self.oZone.sId = aLine[1].upper()
             else:
                 self.oLog.warning("parseName warning {}".format(aLine), outConsole=False)
+
+        self.oZone.sName = sLine
         return
 
     #Samples of line: 'AL SFC', 'AH 985FT AGL', 'AH 1000FT AMSL', 'AH FL075' ...
@@ -189,41 +208,32 @@ class OpenairReader:
 
     #Sample of line: '*AUID GUId=TMA16161 UId=1560993 Id=TMA16161'
     def parseAUID(self, aLine:list) -> None:
-        #                                               #No needs for read GUId=TMA16161
-        #self.oZone.AseUid_mid                          #No needs for read UId=1560993
-        sId:str = aLine[3].split("=")[1]                #Get value of Id=TMA16161
-        if sId.lower().find("(identifiant-lpo)")<0:     #Ne pas intégrer l'exemple pour tests - '(Identifiant-LPO){0123456789}'
-            self.oZone.codeId = sId                     #Store value of Id=TMA16161
-        return
-
-    #Sample of line: '*ADescr Réserve naturelle nationale de la Haute-Chaîne du Jura (published on 27/10/2020)'
-    def parseADescr(self, aLine:list) -> None:
-        self.oZone.sDesc =  " ".join(aLine[1:])
+        oIds:dict = {}
+        for o in aLine[1:]:
+            aO = o.split("=")
+            oIds.update({aO[0]:aO[1]})
+        sGUId:str = oIds.get("GUId", None)
+        if sGUId!="!":
+            self.oZone.sGUId = sGUId
+        sUId:str = oIds.get("UId", None)
+        if sUId!="!":
+            self.oZone.sUId = sUId
+        sId:str = oIds.get("Id", None)
+        if sId.lower().find("(identifiant-lpo)")<0:      #Ne pas intégrer l'exemple pour tests - '(Identifiant-LPO){0123456789}'
+            self.oZone.sId = sId
         return
 
     #Sample of line: '*AActiv [HX] Décollage ou survol possible ...'
-    def parseAActiv(self, aLine:list) -> None:
-        self.oZone.sCodeWorkHr = bpaTools.getContentOf(aLine[1], "[", "]")
+    def parseAActiv(self, aLine:list, sLine:str) -> None:
+        self.oZone.sCodeWorkHr = bpaTools.getContentOf(sLine, "[", "]")
         if len(aLine)>2 and aLine[2]:
-            self.oZone.sRmkWorkHr = " ".join(aLine[2:])
+            self.oZone.sRmkWorkHr = sLine[sLine.find("]")+1:].strip()
         return
 
     #Sample of line: '*ADecla Yes'
     def parseADecla(self, aLine:list) -> None:
         if aLine[1].lower()=="yes" and (not self.oZone.sCodeWorkHr):
             self.oZone.sCodeWorkHr = "HX"
-        return
-
-    #Samples of source line:
-    #   '*ATimes {"1": ["UTC(01/01->31/12)", "ANY(00:00->23:59)"]}'
-    #   '*ATimes {"1": ["UTC(01/01->01/10)", "ANY(00:00->23:59)"], "2": ["UTC(01/12->31/12)", "ANY(00:00->23:59)"]}'
-    #   '*ATimes {"1": ["UTC(01/01->31/12)", "MON to FRI(08:30->16:00)"]}'
-    #   '*ATimes {"1": ["UTC(EDLST->SDLST)", "MON to FRI(07:00->21:00)"], "2": ["UTC(SDLST->EDLST)", "MON to FRI(06:00->22:00)"]}'
-    #   '*ATimes {"1": ["UTC(01/01->31/12)", "ANY(SR/30/E->SS/30/L)"]}'
-    def parseATimes(self, sLine:str) -> None:
-        sDict:str = bpaTools.getContentOf(sLine, "{", "}", True)
-        oATimes:dict = json.loads(sDict)
-        self.oZone.addTimeSheduler(oATimes)
         return
 
     #Sample of line: '*ASeeNOTAM Yes'
@@ -236,9 +246,21 @@ class OpenairReader:
                 self.oZone.sRmkWorkHr += " / " + sMsg
         return
 
+    #Samples of source line:
+    #   '*ATimes {"1": ["UTC(01/01->31/12)", "ANY(00:00->23:59)"]}'
+    #   '*ATimes {"1": ["UTC(01/01->01/10)", "ANY(00:00->23:59)"], "2": ["UTC(01/12->31/12)", "ANY(00:00->23:59)"]}'
+    #   '*ATimes {"1": ["UTC(01/01->31/12)", "MON to FRI(08:30->16:00)"]}'
+    #   '*ATimes {"1": ["UTC(EDLST->SDLST)", "MON to FRI(07:00->21:00)"], "2": ["UTC(SDLST->EDLST)", "MON to FRI(06:00->22:00)"]}'
+    #   '*ATimes {"1": ["UTC(01/01->31/12)", "ANY(SR/30/E->SS/30/L)"]}'
+    def parseATimes(self, aLine:list, sLine:str) -> None:
+        sDict:str = bpaTools.getContentOf(sLine, "{", "}", True)
+        oATimes:dict = json.loads(sDict)
+        self.oZone.addTimeSheduler(oATimes)
+        return
+
     #Generic function for parse the current line
     def parseLine(self, sSrcLine:str) -> None:
-        sLine:str = sSrcLine.replace(","," ")    #Cleaning
+        sLine:str = sSrcLine.replace(","," ")   #Cleaning
         sLine = sLine.replace("\t"," ")         #Cleaning
         sLine = sLine.replace("  "," ")         #Cleaning
         if sLine == "":
@@ -249,20 +271,45 @@ class OpenairReader:
 
         #### Header - Traitement des entêtes de zones
         if aLine[0] == "AC":
+            if self.sFilterClass:           #Gestion du filtrage
+                if aLine[1] in self.sFilterClass:
+                    self.bFilterClassFound = True
+                else:
+                    self.bFilterClassFound = False
+                    return                  #Break
             if self.oZone.bBorderInProcess:
-                self.resetZone()              #Reset current object
+                self.resetZone()            #Reset current object
             self.parseClass(aLine)
             return
 
+        elif not self.bFilterClassFound:    #Gestion du filtrage
+            return                          #Interruption des traitements si la zone n'est pas conforme au filtrage
+
         elif aLine[0] == "AN":
+            if self.sFilterName:            #Gestion du filtrage
+                self.bFilterNameFound = False
+                for sTocken in self.sFilterName:
+                    self.bFilterNameFound = self.bFilterNameFound or bool(sSrcLine.lower().find(sTocken.lower())>=0)
+                if not self.bFilterNameFound:
+                    return                  #Break
             if self.oZone.bBorderInProcess:
-                self.resetZone()              #Reset current object
-            self.parseName(aLine)
+                self.resetZone()            #Reset current object
+            self.parseName(aLine, sSrcLine)
             return
 
-        elif aLine[0] in ["AH", "AL"]:
+        elif not self.bFilterNameFound:     #Gestion du filtrage
+            return                          #Interruption des traitements si la zone n'est pas conforme au filtrage
+
+        if self.sFilterType and self.oZone.sType:    #Gestion du filtrage
+            if self.oZone.sType in self.sFilterType:
+                self.bFilterTypeFound = True
+            else:
+                self.bFilterTypeFound = False
+                return                      #Interruption des traitements si la zone n'est pas conforme au filtrage
+
+        if aLine[0] in ["AH", "AL"]:
             if self.oZone.bBorderInProcess:
-                self.resetZone()              #Reset current object
+                self.resetZone()            #Reset current object
             self.parseAlt(aLine)
             return
 
@@ -271,26 +318,30 @@ class OpenairReader:
             return
 
         elif aLine[0] == "*ADescr":
-            self.parseADescr(aLine)
+            self.oZone.sDesc = sSrcLine[len(aLine[0])+1:]
             return
 
         elif aLine[0] == "*AActiv":
-            self.parseAActiv(aLine)
+            self.parseAActiv(aLine, sSrcLine)
             return
 
         elif aLine[0] == "*ADecla":
             self.parseADecla(aLine)
             return
 
-        elif aLine[0] == "*ATimes":
-            self.parseATimes(sSrcLine)
-            return
-
         elif aLine[0] == "*ASeeNOTAM":
             self.parseASeeNOTAM(aLine)
             return
 
-        elif aLine[0] in ["SP","SB","AT","AY","*AH2","*AL2","*AAlt","*AMzh","*AExSAT","*AExSUN","*AExHOL"]:
+        elif aLine[0] == "*AMhz":
+            self.oZone.sMhz = sSrcLine[len(aLine[0])+1:]
+            return
+
+        elif aLine[0] == "*ATimes":
+            self.parseATimes(aLine, sSrcLine)
+            return
+
+        elif aLine[0] in ["SP","SB","AT","AY","*AH2","*AL2","*AAlt","*AExSAT","*AExSUN","*AExHOL"]:
             return    #Pas besoin de récupération...
 
         elif sLine[0] == "*":
@@ -309,7 +360,7 @@ class OpenairReader:
 
         #### Border - Traitement des bordures géographiques de zones
         try:
-            if aLine[0] in ["AC","AN","AH","AL", "*AUID","*ADescr","*AActiv","*ADecla","*ATimes", "SP","SB","AT","AY","*AH2","*AL2","*AAlt","*AMzh","*AExSAT","*AExSUN","*AExHOL"]:
+            if aLine[0] in ["AC","AN","AH","AL","*AUID","*ADescr","*AActiv","*ADecla","*ASeeNOTAM","*AMhz","*ATimes", "SP","SB","AT","AY","*AH2","*AL2","*AAlt","*AExSAT","*AExSUN","*AExHOL"]:
                 None    #Traité plus haut dans la parties 'header'
 
             elif aLine[0] == "DP":              #DP = Polygon pointC - sample 'DP 44:54:52 N 005:02:35 E'
@@ -348,6 +399,13 @@ class OpenairReader:
             self.oLog.critical("Error: {0} - {1} - Airspace={2}".format(str(e), sSrcLine, self.oZone.getDesc()), outConsole=False)
             #pass
 
+        return
+
+    def setFilters(self, sFilterClass:list=None, sFilterType:list=None, sFilterName:list=None, bFilterNameLike:bool=True) -> None:
+        self.sFilterClass = sFilterClass
+        self.sFilterType = sFilterType
+        self.sFilterName = sFilterName
+        self.bFilterNameLike = bFilterNameLike
         return
 
     def parseFile(self, sSrcFile:str) -> None:

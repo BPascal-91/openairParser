@@ -14,45 +14,6 @@ except ImportError:
     import bpaTools
 
 
-### Context applicatif
-bpaTools.ctrlPythonVersion()
-__AppName__:str     = bpaTools.getFileName(__file__)
-__AppPath__:str     = bpaTools.getFilePath(__file__)
-__AppVers__:str     = bpaTools.getVersionFile()
-___AppId___:str     = __AppName__ + " v" + __AppVers__
-__OutPath__:str     = __AppPath__ + "../out/"
-__LogFile__:str     = __OutPath__ + "_" + __AppName__ + ".log"
-oLog = bpaTools.Logger(___AppId___,__LogFile__)
-
-### Context d'excecution
-if len(sys.argv)<2:
-    ##oLog.isDebug = True     # Write the debug-messages in the log filezzz
-    sSrcPath = "../tst/"
-    #sSrcFile = sSrcPath + "20191214_FFVP_BirdsProtect.txt"
-    #sSrcFile = sSrcPath + "20200704_FFVP_ParcsNat_BPa.txt"
-    #sSrcFile = sSrcPath + "20191213_FFVP_sample_AIRSPACE_FRANCE_TXT_1911.txt"
-    #sSrcFile = sSrcPath + "20191213_FFVP_AIRSPACE_FRANCE_TXT_1911.txt"
-    #sSrcFile = sSrcPath + "20191214_BPa_FR-BPa4XCsoar.txt"
-    #sSrcFile = sSrcPath + "20190401_WPa_ParcCevennes.txt"
-    #sSrcFile = sSrcPath + "20200704_RegisF_ParcsNat_ChampagneBourgogne.txt"
-    #sSrcFile = sSrcPath + "20200805_PatrickB_ParcsNat_ChampagneBourgogne-BPa.txt"
-    #sSrcFile = sSrcPath + "20200810_BPa_ParcsNat_ChampagneBourgogne.txt"
-    #sSrcFile = sSrcPath + "20200729_SergeR_ParcNat_BaieDeSomme.txt"
-    #sSrcFile = sSrcPath + "20200729_SergeR_ParcNat_Hourtin.txt"
-    #sSrcFile = sSrcPath + "20201108_BPa_ZonesComplementaires.txt"
-    #sSrcFile = sSrcPath + "20200510_BPa_FR-ZSM_Protection-des-rapaces.txt"
-    #sSrcFile = sSrcPath + "20190510_FFVP_ParcBauges.txt"
-    #sSrcFile = sSrcPath + "20191129_FFVL_ParcPassy.txt"
-    #sSrcFile = sSrcPath + "20200120_FFVL_ParcAnnecyMaraisBoutDuLac.txt"
-    #sSrcFile = sSrcPath + "20201204_FFVL_ZonesComplementaires.txt"
-    #sSrcFile = sSrcPath + "20210101_sensitivearea_openair_BPa-ANSI.txt"
-    #sSrcFile = sSrcPath + "20210104_FFVL_ParcBauges_BPa.txt"
-    sSrcFile = sSrcPath + "20210106_LTA-FrenchSurfaceS-HR_BPa.txt"
-    #------- appels standards ---
-    sys.argv += [sSrcFile, "-CleanLog"]
-    #sys.argv += ["-h"]
-
-
 def syntaxe() -> None:
     print("Airspace and Terrain description language (OpenAir) Converter")
     print("Call: " + __AppName__ + " <[drive:][path]filename> [<Option(s)>]")
@@ -71,28 +32,46 @@ def syntaxe() -> None:
     return
 
 
-####  Traitements  #####
-sSrcFile:str = sys.argv[1]                              #Nom de fichier
-oOpts:dict = bpaTools.getCommandLineOptions(sys.argv)   #Arguments en dictionnaire
-oLog.writeCommandLine(sys.argv)                         #Trace le contexte d'execution
+if __name__ == '__main__':
+    ### Context applicatif
+    bpaTools.ctrlPythonVersion()
+    __AppName__:str     = bpaTools.getFileName(__file__)
+    __AppPath__:str     = bpaTools.getFilePath(__file__)
+    __AppVers__:str     = bpaTools.getVersionFile()
+    ___AppId___:str     = __AppName__ + " v" + __AppVers__
+    __OutPath__:str     = __AppPath__ + "../out/"
+    __LogFile__:str     = __OutPath__ + "_" + __AppName__ + ".log"
+    oLog = bpaTools.Logger(___AppId___,__LogFile__)
 
+    ### Context d'excecution
+    if len(sys.argv)<2:
+        ##oLog.isDebug = True     # Write the debug-messages in the log filezzz
+        sSrcPath = "../tst/"
+        sSrcFile = sSrcPath + "20210114_LTA-French1-HR_BPa-org.txt"
+        #------- appels standards ---
+        sys.argv += [sSrcFile, "-CleanLog"]
+        #sys.argv += ["-h"]
 
-if "-h" in oOpts:
-    syntaxe()                                       #Aide en ligne
-    oLog.closeFile()
-else:
-    if "-CleanLog" in oOpts:
-        oLog.resetFile()                            #Clean du log si demandé
+    ####  Traitements  #####
+    sSrcFile:str = sys.argv[1]                              #Nom de fichier
+    oOpts:dict = bpaTools.getCommandLineOptions(sys.argv)   #Arguments en dictionnaire
+    oLog.writeCommandLine(sys.argv)                         #Trace le contexte d'execution
 
-    bpaTools.createFolder(__OutPath__)              #Init dossier de sortie
+    if "-h" in oOpts:
+        syntaxe()                                       #Aide en ligne
+        oLog.closeFile()
+    else:
+        if "-CleanLog" in oOpts:
+            oLog.resetFile()                            #Clean du log si demandé
 
-    #Execution des traitements
-    oParser = OpenairReader.OpenairReader(oLog)
-    oParser.parseFile(sSrcFile)
-    oParser.oAixm.parse2Aixm4_5(__OutPath__, sSrcFile)
+        bpaTools.createFolder(__OutPath__)              #Init dossier de sortie
 
-    #Clotures
-    print()
-    oLog.Report()
-    oLog.closeFile()
+        #Execution des traitements
+        oParser = OpenairReader.OpenairReader(oLog)
+        oParser.parseFile(sSrcFile)
+        oParser.oAixm.parse2Aixm4_5(__OutPath__, sSrcFile)
 
+        #Clotures
+        print()
+        oLog.Report()
+        oLog.closeFile()

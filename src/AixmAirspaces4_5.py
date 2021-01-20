@@ -272,13 +272,17 @@ class AixmAse4_5:
         self.sLower:str = None
 
         #---Ase objet--- Complementary items for Aixm 4.5 format
+        self.sLocalType:str = None
         self.sCodeActivity:str = None
         self.sDesc:str = None
+        self.sMhz:str = None
         self.sCodeWorkHr:str = None
         self.sRmkWorkHr:str = None
         self.oTimesh:list = list()
         self.AseUid_mid:str = None
-        self.codeId = " "                    #Défaut = Espace pour alimenter cet élément Aixm
+        self.sId = " "                    #Défaut = Espace pour alimenter cet élément Aixm
+        self.sUId = None
+        self.sGUId = None
         self.codeDistVerUpper:str = None
         self.valDistVerUpper:int = None
         self.uomDistVerUpper:str = None
@@ -392,6 +396,7 @@ class AixmAirspaces:
         bpaTools.initEvent(__file__, oLog)
         self.oLog:bpaTools.Logger = oLog                    #Log file
         self.oAirspaces = list()
+        self.schemaLocation:str = "../_aixm_xsd-4.5b/AIXM-Snapshot.xsd"     #Default dictionary
         return
 
     def getFactoryAirspace(self) -> AixmAse4_5:
@@ -399,21 +404,22 @@ class AixmAirspaces:
         return oAS
 
     def addAirspace(self, oAS:AixmAse4_5) -> AixmAse4_5:
-        self.oAirspaces.append(oAS)             #Add object in factoty list
+        self.oAirspaces.append(oAS)                 #Add object in factoty list
+        #if oAS.sUId==None:
+        #Generate new id !
         oAS.AseUid_mid = len(self.oAirspaces)   #Create object identifier
+        #else:
+        #    oAS.AseUid_mid = oAS.sUId               #Reuse existing identifier
         return oAS
 
-    def parse2Aixm4_5(self, sOutPath:str, sSrcFile:str) -> None:
+    def parse2Aixm4_5(self, sOutPath:str, sSrcFile:str, sDstFile:str=None) -> None:
         oAS:AixmAse4_5 = None
-
-        #Destination file
-        sDstFile =  sOutPath + bpaTools.getFileName(sSrcFile) + "_aixm45.xml"
 
         #AIXM 4.5 XML Header file
         oXML = etree.Element("AIXM-Snapshot")
         attr_qname = etree.QName("http://www.w3.org/2001/XMLSchema-instance", "noNamespaceSchemaLocation")
         #oXML.set(attr_qname, "http://www.aixm.aero/schema/4.5/AIXM-Snapshot.xsd")
-        oXML.set(attr_qname, "../_aixm_xsd-4.5b/AIXM-Snapshot.xsd")
+        oXML.set(attr_qname, self.schemaLocation)
         oXML.set("origin", "BPa")
         oXML.set("version", "4.5")
         oXML.set("created", bpaTools.getNowISO())
@@ -434,9 +440,27 @@ class AixmAirspaces:
             else:
                 oCodeType.text = oAS.sType
             oCodeId = etree.SubElement(oAseUid, "codeId")
-            oCodeId.text = oAS.codeId
+            oCodeId.text = oAS.sId
+
+            #Spécifique Poaff - Caractéristiques complémentaires évzntuellement a conserver
+            sTmp:str = str(oAS.sGUId) + str(oAS.sUId) + str(oAS.sMhz)
+            sTmp = sTmp.replace("None", "")
+            if len(sTmp)>1:         #Au moins 1 caractéristique complémentaire a conserver
+                oAseAdding = etree.SubElement(oAse, "PoaffAdding")
+                if not oAS.sGUId in [None, ""]:
+                    oItem = etree.SubElement(oAseAdding, "GUId")
+                    oItem.text = oAS.sGUId
+                if not oAS.sUId in [None, ""]:
+                    oItem = etree.SubElement(oAseAdding, "UId")
+                    oItem.text = oAS.sUId
+                if not oAS.sMhz in [None, ""]:
+                    oItem = etree.SubElement(oAseAdding, "Mhz")
+                    oItem.text = oAS.sMhz
 
             #<Ase> bloc
+            if not oAS.sLocalType in [None, ""]:
+                oItem = etree.SubElement(oAse, "txtLocalType")
+                oItem.text = oAS.sLocalType
             oItem = etree.SubElement(oAse, "txtName")
             oItem.text = bpaTools.cleanAccent(oAS.sName)
             if not oAS.sCodeActivity in [None, ""]:
@@ -493,7 +517,7 @@ class AixmAirspaces:
             else:
                 oCodeType.text = oAS.sType
             oCodeId = etree.SubElement(oAseUid, "codeId")
-            oCodeId.text = oAS.codeId
+            oCodeId.text = oAS.sId
 
             for oBD in oAS.oBorder:
                 if isinstance(oBD, AixmAvx4_5):
@@ -532,9 +556,11 @@ class AixmAirspaces:
                     oUomRadius.text = oBD.uomRadius
 
         #print(etree.tostring(oXML, pretty_print=True))
-        #Creation du fichier xml
         oTree = etree.ElementTree(oXML)
-        oTree.write(sDstFile, pretty_print=True, xml_declaration=True, encoding="utf-8")
 
+        #Creation du fichier xml
+        if sDstFile==None:
+            sDstFile = bpaTools.getFileName(sSrcFile) + "_aixm45.xml"
+        oTree.write(sOutPath + sDstFile, pretty_print=True, xml_declaration=True, encoding="utf-8")
         return
 
