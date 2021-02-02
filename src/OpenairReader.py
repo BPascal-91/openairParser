@@ -86,9 +86,17 @@ class OpenairReader:
             self.oZone.sId = aLine[1].upper()
         elif aLine[1] in ["ZSM", "MZS", "Bird", "Rapace"]:      #ZSM [Zone-Sensibilité-Majeur] / MSZ [Major-Sensibility-Zone]
             self.oZone.sClass = ""
-            self.oZone.sType = "PROTECT"                        #PROTECT [Airspace protected from specific air traffic.]
+            self.oZone.sType = "ZSM"                            #ZSM [Zone-Sensibilité-Majeur] / MSZ [Major-Sensibility-Zone]
             self.oZone.sCodeActivity = None                     #pour création d'une ZSM [Zone-Sensibilité-Majeur]
             self.oZone.sId = aLine[1].upper()
+        elif aLine[1] in ["FFVL"]:                              #Protocoles particulier signés FFVL - Vol libre
+            self.oZone.sClass = aLine[1]
+            self.oZone.sType = aLine[1] + "-Prot"               #Indicateur protocole particulier
+            self.oZone.sCodeActivity = "PARAGLIDER"
+        elif aLine[1] in ["FFVP"]:                              #Protocoles particulier signés FFVP - Planeurs / Vol à voile
+            self.oZone.sClass = aLine[1]
+            self.oZone.sType = aLine[1] + "-Prot"               #Indicateur protocole particulier
+            self.oZone.sCodeActivity = "GLIDER"
         else:
             self.oZone.sClass = ""             #Default value
             self.oZone.sType = aLine[1]
@@ -100,15 +108,34 @@ class OpenairReader:
         sLine = sLine[len(aLine[0])+1:]
         sLine = sLine.replace("\t"," ")             #Cleaning
         sLine = sLine.replace("  "," ")             #Cleaning
-        sLine = sLine.replace(" (FAUNA)", "")       #Cleaning
-        sLine = sLine.replace(" (GLIDER)", "")      #Cleaning
         sLine = sLine.replace(" (SeeNotam)", "")    #Cleaning
 
-        if aLine[1] in ["CTR", "CTR1", "CTR2", "TMA", "CTA", "R", "P", "Q", "LTA", "W", "VV", "ZSM", "MSZ", "GP", "Bird", "Rapace", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ", "AWY"]:
+        #Context and Cleaning
+        aTocken:list = ["BIRD","FAUNA","NATURE","NO-NOISE","PARAGLIDER","HANGGLIDER","GLIDER","TOWING","BALLOON","SPORT","ULM","DROP","PARACHUTE","ACROBAT","MILOPS","AIRGUN","MISSILES","NAVAL","ANTIHAIL","ARTILERY","ASCENT","ATS","BLAST","SHOOT","EQUIPMENT","EXERCISE","FIRE","GAZ","IND-NUCLEAR","IND-OIL","JETCLIMB","LASER","PROCEDURE","REFUEL","TRG","VIP","VIP-PRES"]
+        aEndSep:list = [")"," "]
+        bFound:bool = False
+        sContext:str = str(bpaTools.getContentOf(sLine, "(", ")")).lower() + ")"
+        for sTocken in aTocken:
+            for sEndSep in aEndSep:
+                if sContext.find(sTocken.lower() + sEndSep)>=0:
+                    self.oZone.sCodeActivity = sTocken
+                    sLine = sLine.replace(sTocken, "")      #Cleaning
+                    sLine = sLine.replace("  "," ")         #Cleaning
+                    sLine = sLine.replace("( ", "(")        #Cleaning
+                    sLine = sLine.replace("()", "")         #Cleaning
+                    sLine = sLine.strip()                   #Cleaning
+                    bFound = True
+                if bFound: break
+            if bFound: break
+
+        if aLine[1] in ["FFVL","FFVP","CTR", "CTR1", "CTR2", "TMA", "CTA", "R", "P", "Q", "LTA", "W", "VV", "ZSM", "MSZ", "PROTECT", "GP", "Bird", "Rapace", "RTBA", "ZIT", "ZRT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ", "PJE", "TRVL", "TRPLA", "AWY"]:
             sLine = sLine.replace(aLine[1] + " ", "")    #Cleaning
 
             if aLine[1]==self.oZone.sType:
                 True    #Ne rien faire
+            elif aLine[1] in ["FFVL","FFVP"]:                   #Protocole particulier
+                #self.oZone.sClass                              #No change class!
+                self.oZone.sType = aLine[1]
             elif aLine[1] in ["CTR", "TMA", "LTA", "CBA"]:
                 #self.oZone.sClass = "D"                        #No change class!
                 self.oZone.sType = aLine[1]
@@ -118,19 +145,28 @@ class OpenairReader:
             elif aLine[1] in ["CTA", "AWY"]:
                 #self.oZone.sClass = "A"                        #No change class!
                 self.oZone.sType = aLine[1]
-            elif aLine[1] in ["R", "P", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ"]:
+            elif aLine[1] in ["P", "R", "RTBA", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ"]:
                 self.oZone.sClass = ""
                 self.oZone.sType = aLine[1]
+            elif aLine[1] in ["ZRT"]:
+                self.oZone.sClass = "R"
+                self.oZone.sType = aLine[1]
+            elif aLine[1] in ["PROTECT"]:
+                #self.oZone.sClass = "Q, W or ZSM"              #No change class!
+                self.oZone.sType = aLine[1]
+            elif aLine[1] in ["PJE", "TRVL", "TRPLA"]:
+                #self.oZone.sClass                              #No change class!
+                #self.oZone.sType                               #No change type !
+                self.oZone.sLocalType = aLine[1]
             elif aLine[1] in ["W", "VV"]:
                 self.oZone.sClass = ""
                 self.oZone.sType = "W"                          #W [Warning Area.]
-                self.oZone.sCodeActivity = "GLIDER"
             elif aLine[1] in ["GP"]:
                 self.oZone.sClass = ""
                 self.oZone.sType = "PROTECT"                    #PROTECT [Airspace protected from specific air traffic.]
                 self.oZone.sCodeActivity = "FAUNA"
                 self.oZone.sId = aLine[1].upper()
-            elif aLine[1] in ["ZSM", "MSZ", "GP", "Bird", "Rapace"]:
+            elif aLine[1] in ["ZSM", "MSZ", "Bird", "Rapace"]:
                 self.oZone.sClass = ""
                 self.oZone.sType = "ZSM"                        #ZSM [Zone-Sensibilité-Majeur] / MSZ [Major-Sensibility-Zone]
                 self.oZone.sId = aLine[1].upper()

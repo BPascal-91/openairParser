@@ -34,6 +34,7 @@ def getCoordonnees(aLine:list) -> (str,str):
             #Openair format - DP 47:36:04 N 000:25:56W
             #Openair format - DP 47:36:04N 000:25:56 W
             #Openair format - DP 47:36:04N 000:25:56W
+            #Openair format - DP 04:53:56.605 N 052:15:37.871 W
             #Openair format - DB 44:54:52N 005:02:35 E 44:55:20N 004:54:10 E
             #Openair format - DB 44:54:52N 005:02:35 E 44:55:20N 004:54:10E
             #Openair format - DB 44:54:52N 005:02:35E 44:55:20N 004:54:10 E
@@ -563,4 +564,11 @@ class AixmAirspaces:
             sDstFile = bpaTools.getFileName(sSrcFile) + "_aixm45.xml"
         oTree.write(sOutPath + sDstFile, pretty_print=True, xml_declaration=True, encoding="utf-8")
         return
+
+
+if __name__ == '__main__':
+    ### Tests
+    sLine = "DP 04:53:56.605 N 052:15:37.871 W"
+    aLine = sLine.split(" ")
+    print(getCoordonnees(aLine))
 
