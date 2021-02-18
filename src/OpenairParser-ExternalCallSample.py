@@ -49,12 +49,13 @@ if __name__ == '__main__':
     #sSrcFile = sSrcPath + "20201204_FFVL_ZonesComplementaires.txt"
     #sSrcFile = sSrcPath + "20210101_sensitivearea_openair_BPa-ANSI.txt"
     #sSrcFile = sSrcPath + "20210104_FFVL_ParcBauges_BPa.txt"
-    srcFile:str  = sSrcPath + "20210114_LTA-French1-HR_BPa-org.txt"
+    #sSrcFile = sSrcPath + "20210114_LTA-French1-HR_BPa-org.txt"
+    sSrcFile = sSrcPath + "20210209_FFVL_ProtocolesParticuliers_BPa.txt"
 
     #Execution des traitements
     oParser = OpenairReader.OpenairReader(oLog)
-    oParser.parseFile(srcFile)
-    oParser.oAixm.parse2Aixm4_5(outPath, srcFile)
+    oParser.parseFile(sSrcFile)
+    oParser.oAixm.parse2Aixm4_5(outPath, sSrcFile)
 
     #Clotures
     print()

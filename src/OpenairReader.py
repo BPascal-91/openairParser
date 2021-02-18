@@ -109,21 +109,37 @@ class OpenairReader:
         sLine = sLine.replace("\t"," ")             #Cleaning
         sLine = sLine.replace("  "," ")             #Cleaning
         sLine = sLine.replace(" (SeeNotam)", "")    #Cleaning
+        sLine = sLine.replace(" / SeeNotam)", ")")  #Cleaning
+        aTocken:list = ["App(", "Twr("]             #Cleaning ...
+        for sTocken in aTocken:
+            leftPos = sLine.find(sTocken)
+            if leftPos>=0:
+                rightPos = sLine.find(")", leftPos)
+                if leftPos>=0 and rightPos>=0:
+                    sLine = sLine[:leftPos] + sLine[rightPos+1:]
+        sLine = sLine.strip()                       #Cleaning
+
 
         #Context and Cleaning
         aTocken:list = ["BIRD","FAUNA","NATURE","NO-NOISE","PARAGLIDER","HANGGLIDER","GLIDER","TOWING","BALLOON","SPORT","ULM","DROP","PARACHUTE","ACROBAT","MILOPS","AIRGUN","MISSILES","NAVAL","ANTIHAIL","ARTILERY","ASCENT","ATS","BLAST","SHOOT","EQUIPMENT","EXERCISE","FIRE","GAZ","IND-NUCLEAR","IND-OIL","JETCLIMB","LASER","PROCEDURE","REFUEL","TRG","VIP","VIP-PRES"]
         aEndSep:list = [")"," "]
         bFound:bool = False
-        sContext:str = str(bpaTools.getContentOf(sLine, "(", ")")).lower() + ")"
+        sContext:str = str(bpaTools.getContentOf(sLine, " (", ")"))                  #Extraire 1ere instance
+
+        #Map 09/02/2021
+        #if sLine.find("(GLIDER)")>=0:
+        #    print()
+
+        #Gestion du cas ou la frequence radio est précisé exp- "FFVP-Prot RMZ Selestat App(120.700) (GLIDER)"
+        if bpaTools.isFloat(sContext):
+            sContext:str = str(bpaTools.getContentOf(sLine, " (", ")", iNoInst=2))   #Extraire 2ieme instance
+        sContext = "(" + sContext.lower() + ")"
         for sTocken in aTocken:
             for sEndSep in aEndSep:
-                if sContext.find(sTocken.lower() + sEndSep)>=0:
+                if sContext.find("(" + sTocken.lower() + sEndSep)>=0:
                     self.oZone.sCodeActivity = sTocken
-                    sLine = sLine.replace(sTocken, "")      #Cleaning
-                    sLine = sLine.replace("  "," ")         #Cleaning
-                    sLine = sLine.replace("( ", "(")        #Cleaning
-                    sLine = sLine.replace("()", "")         #Cleaning
-                    sLine = sLine.strip()                   #Cleaning
+                    sLine = sLine.replace("(" + sTocken + sEndSep, "")      #Cleaning
+                    sLine = sLine.strip()                                   #Cleaning
                     bFound = True
                 if bFound: break
             if bFound: break
@@ -289,7 +305,7 @@ class OpenairReader:
     #   '*ATimes {"1": ["UTC(EDLST->SDLST)", "MON to FRI(07:00->21:00)"], "2": ["UTC(SDLST->EDLST)", "MON to FRI(06:00->22:00)"]}'
     #   '*ATimes {"1": ["UTC(01/01->31/12)", "ANY(SR/30/E->SS/30/L)"]}'
     def parseATimes(self, aLine:list, sLine:str) -> None:
-        sDict:str = bpaTools.getContentOf(sLine, "{", "}", True)
+        sDict:str = bpaTools.getContentOf(sLine, "{", "}", bRetSep=True)
         oATimes:dict = json.loads(sDict)
         self.oZone.addTimeSheduler(oATimes)
         return
@@ -425,7 +441,7 @@ class OpenairReader:
             elif aLine[0] == "DB":              #Just an Arc; sample 'DB 44:54:52 N 005:02:35 E,44:55:20 N 004:54:10 E'
                 if "" in aLine:
                     aLine = list(filter(None, aLine))
-                self.oZone.makeArc(self.circleCenter, aLine, self.circleClockWise)
+                self.oZone.makeArc(self.circleCenter, sSrcLine, self.circleClockWise)
                 self.circleClockWise = "+"      #Reset the default value
 
             else:

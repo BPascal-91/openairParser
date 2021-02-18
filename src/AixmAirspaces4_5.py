@@ -19,12 +19,15 @@ pWGS = Proj("epsg:4326")            # EPSG:4326 = WGS84 / Geodetic coordinate sy
 nm = 1852                           # Nautic Mile to meters
 
 
-def getCoordonnees(aLine:list) -> (str,str):
+def getCoordonnees(sLine:str, bSecondPoint:bool=False) -> (str,str):
     sLat:str = None
     sLon:str = None
     aLat = ["N","S"]
     aLon = ["E","W","O"]
+    aHead = ["DP", "DB", "V X="]
+
     try:
+        """ #Old source
         if aLine[0] == "V" and aLine[1][:2] == "X=":
             #Openair format - V X=48:36:03 N 003:49:00 W
             aLine[1] = aLine[1][2:]     #Cleaning start coords
@@ -35,14 +38,15 @@ def getCoordonnees(aLine:list) -> (str,str):
             #Openair format - DP 47:36:04N 000:25:56 W
             #Openair format - DP 47:36:04N 000:25:56W
             #Openair format - DP 04:53:56.605 N 052:15:37.871 W
-            #Openair format - DB 44:54:52N 005:02:35 E 44:55:20N 004:54:10 E
-            #Openair format - DB 44:54:52N 005:02:35 E 44:55:20N 004:54:10E
-            #Openair format - DB 44:54:52N 005:02:35E 44:55:20N 004:54:10 E
-            #Openair format - DB 44:54:52N 005:02:35E 44:55:20N 004:54:10E
-            #Openair format - V 48:36:03 N 003:49:00 W
-            #Openair format - V 48:36:03 N 003:49:00W
-            #Openair format - V 48:36:03N 003:49:00 W
-            #Openair format - V 48:36:03N 003:49:00W
+            #Openair format - V X=48:36:03 N 003:49:00 W
+            #Openair format - V X=48:36:03 N 003:49:00W
+            #Openair format - V X=48:36:03N 003:49:00 W
+            #Openair format - V X=48:36:03N 003:49:00W
+            #Openair format - DB 44:54:52N 005:02:35 E, 44:55:20N 004:54:10 E
+            #Openair format - DB 44:54:52N 005:02:35 E, 44:55:20N 004:54:10E
+            #Openair format - DB 44:54:52N 005:02:35E, 44:55:20N 004:54:10 E
+            #Openair format - DB 44:54:52N 005:02:35E, 44:55:20N 004:54:10E
+
 
             if len(aLine[1])>1 and aLine[1][-1].upper() in aLat:
                 sLat = aLine[1]
@@ -63,19 +67,51 @@ def getCoordonnees(aLine:list) -> (str,str):
                         sLon = aLine[3]+aLine[4]
                     else:
                         sLon = aLine[4]
+            """
 
-            if sLat==None or sLon==None:
-                raise Exception("?")
+        if   isinstance(sLine, str):
+            aLine:list = sLine.split(" ")
+            sCleanLine:str = sLine[len(aLine[0])+1:]        #Suppression de l'entete ["DP", "DB", "V"]
+        elif isinstance(sLine, list):
+            aLine:list = sLine
+            sCleanLine:str = " ".join(aLine[1:])            #Suppression de l'entete ["DP", "DB", "V"]
 
-            #Calcul en D.d pour reformattage systématique en DMS.d
-            lat, lon = bpaTools.geoStr2dd(sLat, sLon)
-            sLat, sLon = bpaTools.geoDd2dms(lat,"lat" ,lon,"lon", digit=4)
+        if any(sCleanLine[:len(sTocken)]==sTocken for sTocken in aHead):
+            raise Exception("Header error")
 
+        sCleanLine = sCleanLine.replace(" ", "")            #Suppression des espaces non significatif
+        sCleanLine = sCleanLine.replace("X=", "")           #Eventuelle suppression de fin d'entete centre d'arc ou de cercle
+        aCoords = sCleanLine.split(",")
+
+        if bSecondPoint:
+            if len(aCoords)<2:
+                raise Exception("Format error")
+            sCoods:str = str(aCoords[1])
+        else:
+            sCoods:str = str(aCoords[0])
+
+        sLat:str = ""
+        sLon:str = ""
+        bParseLon:bool = False
+        for sChar in sCoods:
+            if sChar in aLat:                       #aLat = ["N","S"]
+                sLat += sChar
+                bParseLon = True
+                continue
+            if sChar in aLon:                       #aLon = ["E","W","O"]
+                if sChar == "O":    sChar="W"
+            if bParseLon:
+                sLon += sChar
+            else:
+                sLat += sChar
+
+        #NEW - Native cleanning (without D.d convertion)
+        sLat, sLon = bpaTools.geoStr2coords(sLat, sLon, outFrmt="dms")
         return sLat, sLon
 
     except Exception as e:
         sHeader = "[" + bpaTools.getFileName(__file__) + "." + getCoordonnees.__name__ + "()] "
-        sMsg = "/!\ Parsing Line Error - {}".format(aLine)
+        sMsg = "/!\ Parsing Line Error - {}".format(sLine)
         raise Exception(sHeader + sMsg + " / " + str(e))
 
 
@@ -133,32 +169,46 @@ class AixmAvx4_5:
         except:
             raise
 
-    def loadArc(self, aCenter:list, aPoint2Point:list, circleClockWise:str) -> bool:
+    def loadArc(self, aCenter:list, sPoint2Point:str, circleClockWise:str) -> bool:
         #aCenter = DP 47:36:04 N 000:25:56 W
-        #aPoint2Point = 'DB 44:54:52 N 005:02:35 E 44:55:20 N 004:54:10 E'
+        #sPoint2Point = 'DB 44:54:52 N 005:02:35 E, 44:55:20 N 004:54:10 E'
         try:
             self.openairType = "Arc"
             if circleClockWise == "-":
-                self.codeType = "CCA"       #Clockwise Arc
+                self.codeType = "CCA"       #Counter Clock wise Arc
             else:
-                self.codeType = "CWA"       #Counter Clockwise Arc
+                self.codeType = "CWA"       #Clock Wise Arc
+
+            #Centre de l'arc
+            latC, lonC = getCoordonnees(aCenter)
+            latCdd, lonCdd = bpaTools.geoStr2coords(latC, lonC, "dd")
+            self.geoLatArc = latC
+            self.geoLongArc = lonC
 
             #Point d'entrée de l'arc
-            lat, lon = getCoordonnees(aPoint2Point)
-            self.geoLat = lat
-            self.geoLong = lon
-            #Le centre de l'arc
-            lat, lon = getCoordonnees(aCenter)
-            self.geoLatArc = lat
-            self.geoLongArc = lon
+            latE, lonE = getCoordonnees(sPoint2Point)
+            latEdd, lonEdd = bpaTools.geoStr2coords(latE, lonE, "dd")
+            self.geoLat = latE
+            self.geoLong = lonE
 
-            # Détermination du rayon de l'arc
-            latC, lonC = bpaTools.geoStr2dd(self.geoLatArc, self.geoLongArc)
-            latS, lonS = bpaTools.geoStr2dd(self.geoLat, self.geoLong)
-            srs = Proj(proj="ortho", lat_0=latC, lon_0=lonC)
-            start_x, start_y = transform(p1=pWGS, p2=srs, x=latS, y=lonS)
-            radius = math.sqrt(start_x**2+start_y**2)   # Meter
-            self.valRadiusArc = round(radius/nm,2)      # Nautic Mile
+            #Point de sortie de l'arc
+            latS, lonS = getCoordonnees(sPoint2Point, bSecondPoint=True)
+            latSdd, lonSdd = bpaTools.geoStr2coords(latS, lonS, "dd")
+
+            #Détermination du rayon de l'arc / par moyenne des deux rayons retenues
+            srs = Proj(proj="ortho", lat_0=latCdd, lon_0=lonCdd)
+            #  a/ Calcul du rayon entre le centre et le point d'entré du cercle
+            start_xE, start_yE = transform(p1=pWGS, p2=srs, x=latEdd, y=lonEdd)
+            radiusE = math.sqrt(start_xE**2+start_yE**2)                    # Meter
+
+            #  b/ Calcul du rayon entre le centre et le point de sortie du cercle
+            start_xS, start_yS = transform(p1=pWGS, p2=srs, x=latSdd, y=lonSdd)
+            radiusS = math.sqrt(start_xS**2+start_yS**2)                    # Meter
+
+            #  c/ Retenir la moyenne des 2 rayons calculés afin de limiter les erreurs de déclallages
+            radius:float = (radiusE + radiusS) / 2                          # Meter
+            self.valRadiusArc = round(radius/nm, 2)                         # Nautic Mile
+
             return True
         except:
             raise
@@ -369,6 +419,7 @@ class AixmAse4_5:
         return ret
 
     def makePoint(self, aLine:list) -> AixmAvx4_5:
+        #aLine = DP 47:13:25 N 002:37:25 E
         try:
             oPoint = AixmAvx4_5()
             if oPoint.loadPoint(aLine):
@@ -377,10 +428,17 @@ class AixmAse4_5:
         except:
             raise
 
-    def makeArc(self, aCenter:list, aPoint2Point:list, circleClockWise:str) -> AixmAvx4_5:
+    def makeArc(self, aCenter:list, sPoint2Point:str, circleClockWise:str) -> AixmAvx4_5:
+        #aCenter = DP 47:36:04 N 000:25:56 W
+        #sPoint2Point = DB 44:54:52 N 005:02:35 E, 44:55:20 N 004:54:10 E
         oArc = AixmAvx4_5()
-        if oArc.loadArc(aCenter, aPoint2Point, circleClockWise):
+        if oArc.loadArc(aCenter, sPoint2Point, circleClockWise):
             self.oBorder.append(oArc)
+
+            #Recup et construction du point de sortie de l'arc
+            aCoords = sPoint2Point.split(",")
+            aLastPoint = str("DP " + aCoords[1]).split(" ")
+            self.makePoint(aLastPoint)
         return oArc
 
     def makeCircle(self, aCenter:list, fRadius:float) -> AixmCircle4_5:
@@ -568,7 +626,22 @@ class AixmAirspaces:
 
 if __name__ == '__main__':
     ### Tests
-    sLine = "DP 04:53:56.605 N 052:15:37.871 W"
-    aLine = sLine.split(" ")
-    print(getCoordonnees(aLine))
+    aTestLines = ["V X=48:36:03 N 003:49:00 W",
+                  "DP 50:25:12N 001:37:52E",
+                  "DP 50:25:12 N 001:37:52E",
+                  "DP 50:25:12N 001:37:52 E",
+                  "DP 50:25:12N 001:37:52E",
+                  "DP 50:25:12.123 N 001:37:52.625 E",
+                  "V X=48:36:03 N 003:49:00 W",
+                  "DB 50:25:12N 001:37:52E, 50:26:16N 001:33:37E",
+                  "DB 50:25:12 N 001:37:52E, 50:26:16 N 001:33:37E",
+                  "DB 50:25:12N 001:37:52 E, 50:26:16N 001:33:37 E",
+                  "DB 50:25:12 N 001:37:52 E, 50:26:16 N 001:33:37 E"]
 
+    for sLine in aTestLines:
+        aLine = sLine.split(" ")
+        print(getCoordonnees(aLine))
+        print(getCoordonnees(sLine))
+        if "," in sLine:
+            print(getCoordonnees(sLine, bSecondPoint=True))
+        print("---")
