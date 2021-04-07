@@ -130,9 +130,17 @@ class OpenairReader:
         #if sLine.find("(GLIDER)")>=0:
         #    print()
 
-        #Gestion du cas ou la frequence radio est précisé exp- "FFVP-Prot RMZ Selestat App(120.700) (GLIDER)"
         if bpaTools.isFloat(sContext):
+            #Cas typique ou la frequence radio est précisé exp- 'AN FFVP-Prot RMZ Selestat App(120.700) (GLIDER)'
             sContext:str = str(bpaTools.getContentOf(sLine, " (", ")", iNoInst=2))   #Extraire 2ieme instance
+        if not(" " in sContext) and not(sContext in aTocken):
+            #Cas typique 'AN PROTECT Contamines (300m/sol) (FAUNA)'
+            sContext:str = str(bpaTools.getContentOf(sLine, " (", ")", iNoInst=2))   #Extraire 2ieme instance
+        if not(" " in sContext) and not(sContext in aTocken):
+            #Cas typique 'AN PROTECT Ecrins (1000m/sol) (FFVL-Prot) (FAUNA)'
+            sContext:str = str(bpaTools.getContentOf(sLine, " (", ")", iNoInst=3))   #Extraire 3ieme instance
+
+        #Analyse des cas avec éventuels contenus multiples = 'AN FFVL-Prot ZRT Houeville (PARAGLIDER / SeeNotam)'
         sContext = "(" + sContext.lower() + ")"
         for sTocken in aTocken:
             for sEndSep in aEndSep:
@@ -477,9 +485,7 @@ class OpenairReader:
         barre.reset()
         print()
         self.oLog.info("--> {} Openair parsing zones".format(len(self.oAixm.oAirspaces)), outConsole=True)
-
-        if self.oLog.isDebug:
-            self.oLog.debug("Debug object {}".format(self.oDebug.keys()), outConsole=False)
+        #self.oLog.debug("Debug object {}".format(self.oDebug.keys()), level=1, outConsole=False)
         return
 
 

@@ -24,9 +24,9 @@ if __name__ == '__main__':
     outPath             = appPath + "../out/"
     logFile             = outPath + "_" + appName + ".log"
 
-    bpaTools.createFolder(outPath)                                  #Init out folder
-    oLog:bpaTools.Logger = bpaTools.Logger(appId,logFile)           #Init logger
-    oLog.resetFile()                                                #Clean du log
+    bpaTools.createFolder(outPath)                                      #Init out folder
+    oLog:bpaTools.Logger = bpaTools.Logger(appId,logFile,debugLevel=1)  #Init logger
+    oLog.resetFile()                                                    #Clean du log
 
     ####  Source test file  ####
     sSrcPath:str = "../tst/"
