@@ -204,50 +204,53 @@ class OpenairReader:
     def parseAlt(self, aLine:list) -> None:
         codeDistVer = valDistVer = uomDistVer = None
 
-        if aLine[1].upper() == "FL":                    #aLine = ['AH','FL','195']
+        if aLine[1].upper() == "FL":                        #aLine = ['AH','FL','195']
             codeDistVer = "STD"
             valDistVer = aLine[2]
             uomDistVer = aLine[1].upper()
-        elif aLine[1][:2].upper() == "FL":                #aLine = ['AH','FL115']
+        elif aLine[1][:2].upper() == "FL":                  #aLine = ['AH','FL115']
             codeDistVer = "STD"
             valDistVer = aLine[1][2:]
             uomDistVer = aLine[1][:2].upper()
-        elif aLine[1][-2:].upper() == "FT":             #aLine = ['AH','2500FT','AMSL']
+        elif aLine[1][-2:].upper() == "FT":                 #aLine = ['AH','2500FT','AMSL']
             codeDistVer = "ALT"
             valDistVer = aLine[1][:-2]
             uomDistVer = aLine[1][-2:].upper()
-        elif aLine[1][-1:].upper() == "F":              #aLine = ['AH','2500F','AMSL']
+        elif aLine[1][-1:].upper() == "F":                  #aLine = ['AH','2500F','AMSL']
             codeDistVer = "ALT"
             valDistVer = aLine[1][:-1]
             uomDistVer = "FT"
-        elif aLine[1][-1:].upper() == "M":              #aLine = ['AH','2500M','AMSL']
+        elif aLine[1][-1:].upper() == "M":                  #aLine = ['AH','2500M','AMSL']
             codeDistVer = "ALT"
-            valDistVer = int(int(aLine[1][:-1]) / ft)   #Convert meter 2 feet
+            valDistVer = int(int(aLine[1][:-1]) / ft)       #Convert meter 2 feet
             uomDistVer = "FT"
-        elif aLine[1].upper() in ["SFC", "GND"]:        #aLine = ['AL','SFC'] or ['AL','GND']
+        elif aLine[1].upper() in ["SFC", "GND"]:            #aLine = ['AL','SFC'] or ['AL','GND']
             codeDistVer = "HEI"
             valDistVer = 0
             uomDistVer = "FT"
-        elif aLine[1].upper() in ["UNL", "UNLIM"]:      #aLine = ['AL','UNL']
+        elif aLine[1].upper() in ["UNL", "UNLIM"]:          #aLine = ['AL','UNL']
             codeDistVer = "STD"
             valDistVer = 999
             uomDistVer = "FL"
         else:
             if len(aLine)>2:
-                if aLine[2].upper() == "FT":         #aLine = ['AH','4500','FT','AMSL']
+                if aLine[2].upper() == "FT":                #aLine = ['AH','4500','FT','AMSL']
                     codeDistVer = "ALT"
                     valDistVer = aLine[1]
                     uomDistVer = aLine[2].upper()
-                elif aLine[2].upper() == "F":         #aLine = ['AH','4500','F','AMSL']
+                elif aLine[2].upper() == "F":               #aLine = ['AH','4500','F','AMSL']
                     codeDistVer = "ALT"
                     valDistVer = aLine[1]
                     uomDistVer = "FT"
-                elif aLine[2].upper() == "M":         #aLine = ['AH','4500','M','AMSL']
+                elif aLine[2].upper() == "M":               #aLine = ['AH','4500','M','AMSL']
                     codeDistVer = "ALT"
-                    valDistVer = int(int(aLine[1]) / ft)   #Convert meter 2 feet
+                    valDistVer = int(int(aLine[1]) / ft)    #Convert meter 2 feet
                     uomDistVer = "FT"
-                else:
-                    self.oLog.critical("parseAlt error {}".format(aLine), outConsole=False)
+                else:                                       #aLine = ['AH', '3300', 'AGL']
+                    codeDistVer = "ALT"
+                    valDistVer = aLine[1]
+                    uomDistVer = "FT"                       #Default value
+                    #self.oLog.critical("parseAlt error {}".format(aLine), outConsole=False)
             else:
                 self.oLog.critical("parseAlt error {}".format(aLine), outConsole=False)
 
