@@ -522,12 +522,12 @@ class AixmAirspaces:
                 oItem.text = oAS.sLocalType
             oItem = etree.SubElement(oAse, "txtName")
             oItem.text = bpaTools.cleanAccent(oAS.sName)
-            if not oAS.sCodeActivity in [None, ""]:
-                oItem = etree.SubElement(oAse, "codeActivity")
-                oItem.text = oAS.sCodeActivity
             if not oAS.sClass in [None, ""]:
                 oItem = etree.SubElement(oAse, "codeClass")
                 oItem.text = oAS.sClass
+            if not oAS.sCodeActivity in [None, ""]:
+                oItem = etree.SubElement(oAse, "codeActivity")
+                oItem.text = oAS.sCodeActivity
             oItem = etree.SubElement(oAse, "codeDistVerUpper")
             oItem.text = oAS.codeDistVerUpper
             oItem = etree.SubElement(oAse, "valDistVerUpper")
