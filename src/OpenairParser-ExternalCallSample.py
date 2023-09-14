@@ -50,7 +50,20 @@ if __name__ == '__main__':
     #sSrcFile = sSrcPath + "20210101_sensitivearea_openair_BPa-ANSI.txt"
     #sSrcFile = sSrcPath + "20210104_FFVL_ParcBauges_BPa.txt"
     #sSrcFile = sSrcPath + "20210114_LTA-French1-HR_BPa-org.txt"
-    sSrcFile = sSrcPath + "20210209_FFVL_ProtocolesParticuliers_BPa.txt"
+    #sSrcFile = sSrcPath + "20210209_FFVL_ProtocolesParticuliers_BPa.txt"
+    sSrcFile = sSrcPath + "20230331_AerodromeGapTallard.txt"
+
+    #sSrcPath:str = "D:/_Users_/BPascal/_4_Src/GitHub/poaff/input/BPa/ZSM/makeOpenair/"
+    #sSrcFile = sSrcPath + "20220409_ZSM_ValdIsere-GorgesDaille.txt"
+
+    sSrcPath:str = "D:/_Users_/BPascal/_4_Src/GitHub/poaff/input/LPO_Biodiv/Biodiv-sports-api/"
+    sSrcFile = sSrcPath + "20230902_biodiv-sports-fr_Parc.txt"
+    #sSrcFile = sSrcPath + "20230902_biodiv-sports-fr_Zsm-Active.txt"
+
+    #sSrcPath:str = "D:/_Users_/BPascal/_4_Src/GitHub/poaff/input/BPa/"
+    #sSrcFile = sSrcPath + "20230324_Octeville_RevueDesZones_SylvainMthn-BPa.txt"
+    #sSrcFile = sSrcPath + "20230118_AIRSPACES_REUNION_DEF.txt"
+
 
     #Execution des traitements
     oParser = OpenairReader.OpenairReader(oLog)

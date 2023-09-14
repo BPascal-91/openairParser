@@ -175,9 +175,10 @@ class OpenairReader:
             elif aLine[1] in ["ZRT"]:
                 self.oZone.sClass = "R"
                 self.oZone.sType = aLine[1]
-            elif aLine[1] in ["PROTECT"]:
-                #self.oZone.sClass = "Q, W or ZSM"              #No change class!
-                self.oZone.sType = aLine[1]
+            #BPascal supprimé le 02/04/2023 pour compatibilité d'intégration Biodiv-sports
+            #elif aLine[1] in ["PROTECT"]:
+            #    #self.oZone.sClass = "Q, W or ZSM"              #No change class!
+            #    self.oZone.sType = aLine[1]
             elif aLine[1] in ["PJE", "TRVL", "TRPLA"]:
                 #self.oZone.sClass                              #No change class!
                 #self.oZone.sType                               #No change type !
