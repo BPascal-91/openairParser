@@ -52,7 +52,7 @@ class OpenairReader:
 
     #Sample of line: 'AC A'
     def parseClass(self, aLine:list) -> None:
-        self.oZone.sType = ""
+        #self.oZone.sType = ""
         if aLine[1] in ["A", "B", "C", "D", "E", "F", "G", "OTHER"]:
             self.oZone.sClass = aLine[1]
             self.oZone.sType = "CLASS"
@@ -152,16 +152,17 @@ class OpenairReader:
                 if bFound: break
             if bFound: break
 
-        if aLine[1] in ["FFVL","FFVP","CTR", "CTR1", "CTR2", "TMA", "CTA", "R", "P", "Q", "LTA", "W", "VV", "ZSM", "MSZ", "PROTECT", "GP", "Bird", "Rapace", "RTBA", "ZIT", "ZRT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ", "PJE", "TRVL", "TRPLA", "AWY"]:
+        aFilter = ["FFVL","FFVP","FFVL-Prot","FFVP-Prot", "CTR", "CTR1", "CTR2", "TMA", "CTA", "AWY", "R", "P", "RTBA", "ZIT", "ZRT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ", "Q", "W", "VV", "LTA", "CBA", "TSA", "TRA", "OCA", "AER", "ZSM", "MSZ", "PROTECT", "GP", "Bird", "Rapace", "PJE", "TRVL", "TRPLA", "SUR", "PRN", "BAL", "AP", "VOL"]
+        if aLine[1] in aFilter:
             sLine = sLine.replace(aLine[1] + " ", "")    #Cleaning
 
             if aLine[1]==self.oZone.sType:
-                True    #Ne rien faire
-            elif aLine[1] in ["FFVL","FFVP"]:                   #Protocole particulier
+                True                                            #No change !
+            elif aLine[1] in ["FFVL","FFVP","FFVL-Prot","FFVP-Prot"]:       #Protocole particulier
                 #self.oZone.sClass                              #No change class!
                 self.oZone.sType = aLine[1]
-            elif aLine[1] in ["CTR", "TMA", "LTA", "CBA"]:
-                #self.oZone.sClass = "D"                        #No change class!
+            elif aLine[1] in ["CTR", "TMA", "LTA", "CBA", "TSA", "TRA", "OCA"]:
+                #self.oZone.sClass                              #No change class!
                 self.oZone.sType = aLine[1]
             elif aLine[1] in ["CTR1", "CTR2"]:
                 #self.oZone.sClass = "D"                        #No change class!
@@ -169,21 +170,22 @@ class OpenairReader:
             elif aLine[1] in ["CTA", "AWY"]:
                 #self.oZone.sClass = "A"                        #No change class!
                 self.oZone.sType = aLine[1]
-            elif aLine[1] in ["P", "R", "RTBA", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ"]:
+            elif aLine[1] in ["R", "P", "RTBA", "ZIT", "RMZ", "TMZ", "TMZ/RMZ", "RMZ/TMZ"]:
                 self.oZone.sClass = ""
                 self.oZone.sType = aLine[1]
             elif aLine[1] in ["ZRT"]:
                 self.oZone.sClass = "R"
                 self.oZone.sType = aLine[1]
-            #BPascal supprimé le 02/04/2023 pour compatibilité d'intégration Biodiv-sports
-            #elif aLine[1] in ["PROTECT"]:
-            #    #self.oZone.sClass = "Q, W or ZSM"              #No change class!
-            #    self.oZone.sType = aLine[1]
-            elif aLine[1] in ["PJE", "TRVL", "TRPLA"]:
+            elif aLine[1] in ["PROTECT"]:
+                #BPascal supprimé le 02/04/2023 pour compatibilité d'intégration Biodiv-sports
+                #    #self.oZone.sClass                         #No change class!
+                #    self.oZone.sType                           #No change class!
+                True                                            #No change !
+            elif aLine[1] in ["PJE", "TRVL", "TRPLA", "SUR", "PRN", "BAL", "AP", "VOL", "AER"]:
                 #self.oZone.sClass                              #No change class!
                 #self.oZone.sType                               #No change type !
                 self.oZone.sLocalType = aLine[1]
-            elif aLine[1] in ["W", "VV"]:
+            elif aLine[1] in ["Q", "W", "VV"]:
                 self.oZone.sClass = ""
                 self.oZone.sType = "W"                          #W [Warning Area.]
             elif aLine[1] in ["GP"]:
@@ -196,7 +198,10 @@ class OpenairReader:
                 self.oZone.sType = "ZSM"                        #ZSM [Zone-Sensibilité-Majeur] / MSZ [Major-Sensibility-Zone]
                 self.oZone.sId = aLine[1].upper()
             else:
-                self.oLog.warning("parseName warning {}".format(aLine), outConsole=False)
+                self.oLog.warning("ParseName warning il manque un  traitement {}".format(aLine), outConsole=False)
+
+        if not (aLine[1] in aFilter):
+            self.oLog.warning("ParseName micro-warning analyser si c'est normal{}".format(aLine), outConsole=False)
 
         self.oZone.sName = sLine
         return
@@ -405,7 +410,7 @@ class OpenairReader:
             self.parseATimes(aLine, sSrcLine)
             return
 
-        elif aLine[0] in ["SP","SB","AT","AY","*AH2","*AL2","*AAlt","*AExSAT","*AExSUN","*AExHOL"]:
+        elif aLine[0] in ["SP","SB","AT","AY","AF","*AH2","*AL2","*AAlt","*AExSAT","*AExSUN","*AExHOL"]:
             return    #Pas besoin de récupération...
 
         elif sLine[0] == "*":
