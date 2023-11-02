@@ -59,8 +59,8 @@ if __name__ == '__main__':
     #sSrcFile = sSrcPath + "20220409_ZSM_ValdIsere-GorgesDaille.txt"
 
     sSrcPath:str = "D:/_Users_/BPascal/_4_Src/GitHub/poaff/input/LPO_Biodiv/Biodiv-sports-api/"
-    sSrcFile = sSrcPath + "20230926_biodiv-sports-fr_allperiod_Parc.txt"
-    sSrcFile = sSrcPath + "20230926_biodiv-sports-fr_allperiod_Zsm-Active.txt"
+    #sSrcFile = sSrcPath + "20231031_biodiv-sports-fr_nov_Parc.txt"
+    sSrcFile = sSrcPath + "20231031_biodiv-sports-fr_nov_Zsm-Active.txt"
 
     #sSrcPath:str = "D:/_Users_/BPascal/_4_Src/GitHub/poaff/input/BPa/"
     #sSrcFile = sSrcPath + "20230324_Octeville_RevueDesZones_SylvainMthn-BPa.txt"

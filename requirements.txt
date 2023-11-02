@@ -4,5 +4,5 @@
 ### Documentation: 	https://python.doctor/page-pip-installer-librairies-automatiquement
 ###
 lxml==4.9.3
-beautifulsoup4==4.8.0
+beautifulsoup4==4.12.2
 pyproj==2.4.2
