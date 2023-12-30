@@ -275,12 +275,15 @@ class OpenairReader:
             self.oZone.uomDistVerLower = uomDistVer
         return
 
-    #Sample of line: '*AUID GUId=TMA16161 UId=1560993 Id=TMA16161'
+    #Sample of line: Poaff - '*AUID GUId=TMA16161 UId=1560993 Id=TMA16161'
+    #                SpotAir '*AUID spotair=56878 geomatika=3371 espece=9 pays=fr active=1'
     def parseAUID(self, aLine:list) -> None:
         oIds:dict = {}
         for o in aLine[1:]:
             aO = o.split("=")
             oIds.update({aO[0]:aO[1]})
+
+        #Poaff - '*AUID GUId=TMA16161 UId=1560993 Id=TMA16161'
         sGUId:str = oIds.get("GUId", None)
         if sGUId!="!":
             self.oZone.sGUId = sGUId
@@ -288,8 +291,18 @@ class OpenairReader:
         if sUId!="!":
             self.oZone.sUId = sUId
         sId:str = oIds.get("Id", None)
-        if sId.lower().find("(identifiant-lpo)")<0:      #Ne pas intégrer l'exemple pour tests - '(Identifiant-LPO){0123456789}'
-            self.oZone.sId = sId
+        if sId:
+            if sId.lower().find("(identifiant-lpo)")<0:      #Ne pas intégrer l'exemple pour tests - '(Identifiant-LPO){0123456789}'
+                self.oZone.sId = sId
+
+        #SpotAir '*AUID spotair=56878 geomatika=3371 espece=9 pays=fr active=1'
+        sGeomaId:str = oIds.get("geomatika", None)
+        if sGeomaId:
+            self.oZone.sGUId = sGeomaId
+        sSpotId:str = oIds.get("spotair", None)
+        if sSpotId:
+            self.oZone.sUId = sSpotId
+
         return
 
     #Sample of line: '*AActiv [HX] Décollage ou survol possible ...'

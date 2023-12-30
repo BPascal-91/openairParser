@@ -58,14 +58,19 @@ if __name__ == '__main__':
     #sSrcPath:str = "D:/_Users_/BPascal/_4_Src/GitHub/poaff/input/BPa/ZSM/makeOpenair/"
     #sSrcFile = sSrcPath + "20220409_ZSM_ValdIsere-GorgesDaille.txt"
 
-    sSrcPath:str = "D:/_Users_/BPascal/_4_Src/GitHub/poaff/input/LPO_Biodiv/Biodiv-sports-api/"
-    #sSrcFile = sSrcPath + "20231031_biodiv-sports-fr_nov_Parc.txt"
-    sSrcFile = sSrcPath + "20231031_biodiv-sports-fr_nov_Zsm-Active.txt"
-
     #sSrcPath:str = "D:/_Users_/BPascal/_4_Src/GitHub/poaff/input/BPa/"
     #sSrcFile = sSrcPath + "20230324_Octeville_RevueDesZones_SylvainMthn-BPa.txt"
     #sSrcFile = sSrcPath + "20230118_AIRSPACES_REUNION_DEF.txt"
 
+    #sSrcPath:str = "D:/_Users_/BPascal/_4_Src/GitHub/poaff/input/LPO_Biodiv/Biodiv-sports-api/"
+    #sSrcFile = sSrcPath + "20240101_biodiv-sports-fr_janv_Zsm-Active.txt"
+    #sSrcFile = sSrcPath + "20240101_biodiv-sports-fr_janv_Parc.txt"
+
+    #sSrcPath:str = "D:\_Users_\BPascal\_4_Src\GitHub\poaff\input\SpotAir/"
+    #sSrcFile = sSrcPath + "20231229b_zsm-export_ANSII.txt"
+
+    sSrcPath:str = "D:\_Users_\BPascal\_4_Src\GitHub\poaff\input\STAC/"
+    sSrcFile = sSrcPath + "20240229_ZSM-coeur-france.txt"
 
     #Execution des traitements
     oParser = OpenairReader.OpenairReader(oLog)
